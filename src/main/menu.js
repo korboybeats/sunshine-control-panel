@@ -44,22 +44,22 @@ export function createMenuTemplate(mainWindow) {
       ],
     },
     {
-      label: '管理',
+      label: 'Manage',
       submenu: [
         {
-          label: '编辑虚拟显示器分辨率',
+          label: 'Edit Virtual Display Resolution',
           click: () => {
             const subWin = createSubBrowserWin(null, mainWindow)
             subWin.loadFile(join(__dirname, '../renderer/vdd/index.html'))
           },
         },
         {
-          label: '卸载虚拟显示器',
+          label: 'Uninstall Virtual Display',
           click: async () => {
             const prompt = await dialog.showMessageBox(mainWindow, {
               type: 'question',
-              message: '确认卸载? 卸载后可通过重新安装基地版sunshine恢复。',
-              buttons: ['取消', '确认'],
+              message: 'Are you sure you want to uninstall? You can restore it by reinstalling the base version of Sunshine.',
+              buttons: ['Cancel', 'Confirm'],
             })
             if (prompt.response) {
               const uninstallCmd = [
@@ -71,7 +71,7 @@ export function createMenuTemplate(mainWindow) {
 
               runCmdAsAdmin(uninstallCmd).on('close', (code) => {
                 dialog.showMessageBox(mainWindow, {
-                  message: `虚拟显示器卸载完成: ${code}`,
+                  message: `Uninstallation of virtual display completed: ${code}`,
                 })
               })
             }
@@ -79,7 +79,7 @@ export function createMenuTemplate(mainWindow) {
         },
         { type: 'separator' },
         {
-          label: '重启显卡驱动',
+          label: 'Restart Graphics Driver',
           click: () => {
             const restartExe = join(SUNSHINE_TOOLS_PATH, 'restart64.exe')
             sudo.exec(`"${restartExe}"`, {
@@ -88,7 +88,7 @@ export function createMenuTemplate(mainWindow) {
           },
         },
         {
-          label: '以管理员身份重启sunshine',
+          label: 'Restart Sunshine as Administrator',
           click: () => {
             const command = [
               'net stop sunshineservice',
@@ -103,16 +103,16 @@ export function createMenuTemplate(mainWindow) {
       ],
     },
     {
-      label: '使用教程',
+      label: 'User Guide',
       submenu: [
         {
-          label: '下载最新基地版sunshine',
+          label: 'Download Latest Base Version of Sunshine',
           click: async () => {
             await shell.openExternal('https://github.com/qiin2333/Sunshine/releases/tag/alpha')
           },
         },
         {
-          label: '加入串流基地裙',
+          label: 'Join My QQ Group',
           click: async () => {
             const subWin = createSubBrowserWin(null, mainWindow)
             subWin.loadURL('https://qm.qq.com/q/s3QnqbxvFK')
@@ -122,7 +122,7 @@ export function createMenuTemplate(mainWindow) {
           },
         },
         {
-          label: '食用指南',
+          label: 'User Guide',
           click: async () => {
             await shell.openExternal('https://docs.qq.com/aio/DSGdQc3htbFJjSFdO')
           },
@@ -130,31 +130,31 @@ export function createMenuTemplate(mainWindow) {
       ],
     },
     {
-      label: '小工具',
+      label: 'Tools',
       submenu: [
         {
-          label: '剪贴板同步',
+          label: 'Clipboard Sync',
           click: async () => {
             const subWin = createSubBrowserWin(null, mainWindow)
             subWin.loadURL('https://gcopy.rutron.net/zh')
           },
         },
         {
-          label: '串流屏摄专用计时器',
+          label: 'Timer for Streaming Screen Capture',
           click: () => {
             const subWin = createSubBrowserWin({ width: 1080, height: 600 }, mainWindow)
             subWin.loadFile(join(__dirname, '../renderer/stop-clock-canvas/index.html'))
           },
         },
         {
-          label: '新一代延迟测试钟 by Kile',
+          label: 'New Generation Delay Test Clock by Kile',
           click: async () => {
             const subWin = createSubBrowserWin(null, mainWindow)
             subWin.loadURL('https://yangkile.github.io/D-lay/')
           },
         },
         {
-          label: '手柄测试',
+          label: 'Gamepad Testing',
           click: async () => {
             await shell.openExternal('https://hardwaretester.com/gamepad')
           },
@@ -162,11 +162,11 @@ export function createMenuTemplate(mainWindow) {
       ],
     },
     {
-      label: '关于',
+      label: 'About',
       click: () =>
         openAboutWindow.default({
           icon_path: 'https://raw.gitmirror.com/qiin2333/qiin.github.io/assets/img/109527119_p1.png',
-          product_name: 'Sunshine 基地版',
+          product_name: 'Sunshine Base Version',
           copyright: 'Copyright (c) 2023 Qiin',
           use_version_info: false,
           package_json_dir: __dirname,
