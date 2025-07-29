@@ -103,14 +103,14 @@ function createTray() {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: '设置虚拟显示器（vdd)',
+        label: 'Toggle Virtual Display Driver',
         click: () => {
           const subWin = createSubBrowserWin(null, win)
           subWin.loadFile(join(__dirname, '../renderer/vdd/index.html'))
         },
       },
       {
-        label: '退出程序',
+        label: 'Exit',
         click: () => {
           app.isQuiting = true
           app.quit()
@@ -121,7 +121,7 @@ function createTray() {
 
     tray.on('click', () => toggleWindowVisibility())
   } catch (error) {
-    console.error('托盘创建失败:', error)
+    console.error('Failed to create tray icon:', error)
   }
 }
 

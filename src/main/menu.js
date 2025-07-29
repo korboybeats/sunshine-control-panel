@@ -103,7 +103,7 @@ export function createMenuTemplate(mainWindow) {
       ],
     },
     {
-      label: 'User Guide',
+      label: 'Resources',
       submenu: [
         {
           label: 'Download Latest Base Version of Sunshine',
