@@ -103,7 +103,7 @@ function createTray() {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Toggle Virtual Display Driver',
+        label: 'Set Virtual Display Driver',
         click: () => {
           const subWin = createSubBrowserWin(null, win)
           subWin.loadFile(join(__dirname, '../renderer/vdd/index.html'))
