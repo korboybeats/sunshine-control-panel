@@ -48,9 +48,9 @@ export const supportedLocales = [
 
 // 创建 i18n 实例
 export const i18n = createI18n({
-  legacy: false, // 使用 Composition API 模式
-  locale: 'zh', // 默认语言
-  fallbackLocale: 'en', // 回退语言
+  legacy: false, // Composition API mode
+  locale: 'en_US', // Default language (English Edition)
+  fallbackLocale: 'en', // Fallback language
   messages: {
     en,
     en_GB,
@@ -91,8 +91,8 @@ export function getDefaultLocale() {
     return locale.code
   }
 
-  // 默认返回中文
-  return 'zh'
+  // Default to English (English Edition)
+  return 'en_US'
 }
 
 // 设置语言

@@ -85,13 +85,13 @@ const EN_STRINGS: TrayStrings = TrayStrings {
 fn get_tray_strings() -> &'static TrayStrings {
     let locale = CURRENT_LOCALE.lock().unwrap();
     match locale.as_deref() {
-        Some("en") => &EN_STRINGS,
-        _ => &ZH_STRINGS,
+        Some("zh") | Some("zh_CN") | Some("zh_TW") => &ZH_STRINGS,
+        _ => &EN_STRINGS,
     }
 }
 
 fn get_current_locale() -> String {
-    CURRENT_LOCALE.lock().unwrap().clone().unwrap_or_else(|| "zh".to_string())
+    CURRENT_LOCALE.lock().unwrap().clone().unwrap_or_else(|| "en".to_string())
 }
 
 #[cfg(target_os = "windows")]
@@ -130,11 +130,12 @@ pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     #[cfg(target_os = "windows")]
     init_sunshine_user_mode_state(app);
 
-    // 初始化语言状态（从 localStorage 无法直接读取，先用默认值，前端初始化后会同步）
+    // Initialize language state. localStorage isn't readable from here, so we
+    // default to English; the frontend syncs the user's actual choice afterward.
     {
         let mut locale = CURRENT_LOCALE.lock().unwrap();
         if locale.is_none() {
-            *locale = Some("zh".to_string());
+            *locale = Some("en".to_string());
         }
     }
 
