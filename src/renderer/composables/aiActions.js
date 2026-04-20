@@ -1,12 +1,12 @@
 /**
- * AI 操作解析与执行
- * 负责解析 AI 返回的 JSON 操作指令，并执行对 Sunshine 的修改
+ * AI action parsing and execution
+ * Parses JSON action instructions returned by AI and applies changes to Sunshine.
  */
 
 import { ElMessage } from 'element-plus'
 
 /**
- * 获取 Sunshine API 代理地址
+ * Get the Sunshine API proxy URL
  */
 async function getProxyUrl() {
   try {
@@ -18,18 +18,18 @@ async function getProxyUrl() {
 }
 
 /**
- * 获取当前应用列表
+ * Fetch the current apps list
  */
 async function fetchApps() {
   const proxyUrl = await getProxyUrl()
   const resp = await fetch(`${proxyUrl}/api/apps`)
-  if (!resp.ok) throw new Error(`获取应用列表失败: ${resp.status}`)
+  if (!resp.ok) throw new Error(`Failed to fetch apps list: ${resp.status}`)
   const data = await resp.json()
   return { apps: data.apps || data || [], proxyUrl }
 }
 
 /**
- * 保存单个应用（匹配 Sunshine API 格式）
+ * Save a single app (matches Sunshine API format)
  */
 async function saveApp(proxyUrl, apps, appIndex, app) {
   const editApp = { index: appIndex, ...app }
@@ -38,11 +38,11 @@ async function saveApp(proxyUrl, apps, appIndex, app) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ apps, editApp }),
   })
-  if (!resp.ok) throw new Error(`保存失败: ${resp.status}`)
+  if (!resp.ok) throw new Error(`Save failed: ${resp.status}`)
 }
 
 /**
- * 生成随机 ID（10位字母数字）
+ * Generate a random ID (10 alphanumeric chars)
  */
 function generateId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
@@ -50,8 +50,8 @@ function generateId() {
 }
 
 /**
- * 获取 Sunshine 最近日志，供 AI 分析使用
- * 只取最后若干行，避免 token 过多
+ * Fetch recent Sunshine logs for the AI to analyze.
+ * Only includes the last N lines to keep token usage reasonable.
  */
 export async function getLogsContext(maxLines = 150) {
   try {
@@ -61,14 +61,14 @@ export async function getLogsContext(maxLines = 150) {
     const text = await resp.text()
     const lines = text.split('\n')
     const recent = lines.slice(-maxLines).join('\n')
-    return `\n\n最近的 Sunshine 日志（最后 ${Math.min(lines.length, maxLines)} 行）：\n\`\`\`\n${recent}\n\`\`\``
+    return `\n\nRecent Sunshine logs (last ${Math.min(lines.length, maxLines)} lines):\n\`\`\`\n${recent}\n\`\`\``
   } catch {
     return ''
   }
 }
 
 /**
- * 获取当前应用列表摘要，供 AI 上下文使用
+ * Get a summary of the currently configured apps, for AI context
  */
 export async function getAppsContext() {
   try {
@@ -76,18 +76,18 @@ export async function getAppsContext() {
     const summary = apps
       .map((a) => {
         const menuCmds = (a['menu-cmd'] || []).map((c) => `  - ${c.name}: ${c.cmd}`).join('\n')
-        return `- ${a.name}${a.cmd ? ` (cmd: ${a.cmd})` : ''}${menuCmds ? `\n  现有菜单命令:\n${menuCmds}` : ''}`
+        return `- ${a.name}${a.cmd ? ` (cmd: ${a.cmd})` : ''}${menuCmds ? `\n  Existing menu commands:\n${menuCmds}` : ''}`
       })
       .join('\n')
-    return `\n\n当前已配置的应用列表：\n${summary}`
+    return `\n\nCurrently configured apps:\n${summary}`
   } catch {
     return ''
   }
 }
 
 /**
- * 从 AI 回复中解析 JSON 操作指令
- * @returns {object|null} 解析出的操作对象，或 null
+ * Parse a JSON action instruction from an AI reply
+ * @returns {object|null} parsed action object, or null
  */
 export function parseAction(message) {
   try {
@@ -104,11 +104,11 @@ export function parseAction(message) {
 }
 
 /**
- * 执行 AI 建议的操作
- * @returns {string} 操作结果描述
+ * Execute an AI-suggested action
+ * @returns {string} description of the result
  */
 export async function executeAction(action) {
-  if (!action) throw new Error('无效操作')
+  if (!action) throw new Error('Invalid action')
 
   switch (action.action) {
     case 'add_menu_cmd':
@@ -120,18 +120,18 @@ export async function executeAction(action) {
     case 'modify_config':
       return applyConfigChange(action)
     default:
-      throw new Error(`未知操作类型: ${action.action}`)
+      throw new Error(`Unknown action type: ${action.action}`)
   }
 }
 
 /**
- * 添加菜单命令
+ * Add menu commands
  */
 async function applyMenuCmd(action) {
   const { apps, proxyUrl } = await fetchApps()
   const targetName = action.app_name || 'Desktop'
   const appIndex = apps.findIndex((a) => a.name === targetName)
-  if (appIndex === -1) throw new Error(`未找到应用 "${targetName}"`)
+  if (appIndex === -1) throw new Error(`App "${targetName}" not found`)
 
   const app = apps[appIndex]
   if (!app['menu-cmd']) app['menu-cmd'] = []
@@ -153,19 +153,19 @@ async function applyMenuCmd(action) {
 
   await saveApp(proxyUrl, apps, appIndex, app)
 
-  const cmdNames = action.commands.map((c) => c.name).join('、')
-  ElMessage.success(`已添加菜单命令：${cmdNames}`)
-  return `✅ 已成功添加 ${action.commands.length} 条菜单命令到 "${targetName}"：${cmdNames}\n\n${action.explanation || ''}`
+  const cmdNames = action.commands.map((c) => c.name).join(', ')
+  ElMessage.success(`Added menu commands: ${cmdNames}`)
+  return `✅ Added ${action.commands.length} menu command(s) to "${targetName}": ${cmdNames}\n\n${action.explanation || ''}`
 }
 
 /**
- * 添加预处理命令
+ * Add prep (pre/post) commands
  */
 async function applyPrepCmd(action) {
   const { apps, proxyUrl } = await fetchApps()
   const targetName = action.app_name || 'Desktop'
   const appIndex = apps.findIndex((a) => a.name === targetName)
-  if (appIndex === -1) throw new Error(`未找到应用 "${targetName}"`)
+  if (appIndex === -1) throw new Error(`App "${targetName}" not found`)
 
   const app = apps[appIndex]
   if (!app['prep-cmd']) app['prep-cmd'] = []
@@ -180,46 +180,46 @@ async function applyPrepCmd(action) {
 
   await saveApp(proxyUrl, apps, appIndex, app)
 
-  ElMessage.success(`已添加 ${action.commands.length} 条预处理命令`)
-  return `✅ 已成功添加 ${action.commands.length} 条预处理命令到 "${targetName}"\n\n${action.explanation || ''}`
+  ElMessage.success(`Added ${action.commands.length} prep command(s)`)
+  return `✅ Added ${action.commands.length} prep command(s) to "${targetName}"\n\n${action.explanation || ''}`
 }
 
 /**
- * 修改 Sunshine 配置
+ * Modify Sunshine config
  */
 async function applyConfigChange(action) {
-  if (!action?.changes) throw new Error('无配置修改')
+  if (!action?.changes) throw new Error('No config changes provided')
 
   const proxyUrl = await getProxyUrl()
 
-  // 获取当前配置
+  // Fetch current config
   const getResp = await fetch(`${proxyUrl}/api/config`)
-  if (!getResp.ok) throw new Error(`获取配置失败: ${getResp.status}`)
+  if (!getResp.ok) throw new Error(`Failed to fetch config: ${getResp.status}`)
   const currentConfig = await getResp.json()
 
-  // 合并修改
+  // Merge updates
   const updates = {}
   for (const change of action.changes) {
     updates[change.key] = change.value
   }
 
-  // 保存配置
+  // Save config
   const saveResp = await fetch(`${proxyUrl}/api/config`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...currentConfig, ...updates }),
   })
-  if (!saveResp.ok) throw new Error(`保存配置失败: ${saveResp.status}`)
+  if (!saveResp.ok) throw new Error(`Failed to save config: ${saveResp.status}`)
 
-  ElMessage.success(action.explanation || '配置已更新')
-  return `✅ 已应用修改：${action.explanation}`
+  ElMessage.success(action.explanation || 'Config updated')
+  return `✅ Applied changes: ${action.explanation}`
 }
 
 /**
- * 批量增强应用配置
+ * Bulk-enhance app configs
  */
 async function applyEnhanceApps(action) {
-  if (!action?.apps?.length) throw new Error('无应用需要增强')
+  if (!action?.apps?.length) throw new Error('No apps to enhance')
 
   const { apps, proxyUrl } = await fetchApps()
   let updatedCount = 0
@@ -268,6 +268,6 @@ async function applyEnhanceApps(action) {
     if (saveResp.ok) updatedCount++
   }
 
-  ElMessage.success(`已增强 ${updatedCount} 个应用的配置`)
-  return `✅ 已成功增强 ${updatedCount}/${action.apps.length} 个应用的配置\n\n${action.explanation || ''}`
+  ElMessage.success(`Enhanced configs for ${updatedCount} app(s)`)
+  return `✅ Enhanced configs for ${updatedCount}/${action.apps.length} app(s)\n\n${action.explanation || ''}`
 }

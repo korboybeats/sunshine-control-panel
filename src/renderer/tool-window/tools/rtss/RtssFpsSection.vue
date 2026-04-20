@@ -75,7 +75,7 @@ async function loadState() {
     const state = await invoke('rtss_get_limiter_status')
     limiterEnabled.value = state === 1
   } catch (e) {
-    console.warn('获取帧率限制状态失败:', e)
+    console.warn('Failed to fetch framerate limit state:', e)
   }
 }
 

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use log::{info, warn, debug};
 use crate::sunshine;
 
-/// 检查当前进程是否具有管理员权限
+/// Check whether the current process has administrator privileges
 #[cfg(target_os = "windows")]
 fn is_elevated() -> bool {
     use std::process::Command;
@@ -22,7 +22,7 @@ fn is_elevated() -> bool {
     }
 }
 
-/// 以适当权限运行 bat 脚本：已有管理员权限则直接运行，否则提权
+/// Run a .bat script at appropriate privilege — run directly if already admin, otherwise elevate
 #[cfg(target_os = "windows")]
 fn run_bat_elevated(bat_path: &std::path::Path) -> Result<(), String> {
     use std::process::Command;
@@ -30,19 +30,19 @@ fn run_bat_elevated(bat_path: &std::path::Path) -> Result<(), String> {
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
     if is_elevated() {
-        // 已有管理员权限，直接运行
+        // Already elevated — run directly
         let output = Command::new("cmd")
             .args(&["/c", &bat_path.to_string_lossy()])
             .creation_flags(CREATE_NO_WINDOW)
             .output()
-            .map_err(|e| format!("启动脚本失败: {}", e))?;
+            .map_err(|e| format!("Failed to start script: {}", e))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("脚本执行失败: {}", stderr));
+            return Err(format!("Script failed: {}", stderr));
         }
     } else {
-        // 需要提权
+        // Needs elevation
         let ps_cmd = format!(
             r#"Start-Process cmd -ArgumentList '/c','""{bat}""' -Verb RunAs -WindowStyle Hidden -Wait"#,
             bat = bat_path.display()
@@ -52,52 +52,52 @@ fn run_bat_elevated(bat_path: &std::path::Path) -> Result<(), String> {
             .args(&["-NoProfile", "-Command", &ps_cmd])
             .creation_flags(CREATE_NO_WINDOW)
             .output()
-            .map_err(|e| format!("启动脚本失败: {}", e))?;
+            .map_err(|e| format!("Failed to start script: {}", e))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("脚本执行失败: {}", stderr));
+            return Err(format!("Script failed: {}", stderr));
         }
     }
     Ok(())
 }
 
-/// vmouse 驱动状态信息
+/// vmouse driver status info
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VmouseStatus {
-    /// 驱动是否已安装（设备节点存在）
+    /// Whether the driver is installed (device node exists)
     pub installed: bool,
-    /// 设备是否正常运行（无错误码）
+    /// Whether the device is running (no error codes)
     pub running: bool,
-    /// 设备状态描述
+    /// Device status description
     pub status_text: String,
-    /// 驱动文件路径（如有）
+    /// Driver file path (if any)
     pub driver_path: String,
-    /// sunshine.conf 中 virtual_mouse 配置值
+    /// The `virtual_mouse` config value in sunshine.conf
     pub config_enabled: bool,
 }
 
-/// vmouse 驱动文件目录
+/// vmouse driver files directory
 fn get_vmouse_tools_path() -> PathBuf {
     PathBuf::from(sunshine::get_sunshine_install_path())
         .join("tools")
         .join("vmouse")
 }
 
-/// vmouse bat 脚本目录（CMake 安装到 scripts/vmouse/）
+/// vmouse bat-scripts directory (CMake installs these to scripts/vmouse/)
 fn get_vmouse_scripts_path() -> PathBuf {
     PathBuf::from(sunshine::get_sunshine_install_path())
         .join("scripts")
         .join("vmouse")
 }
 
-/// 检查 vmouse 设备节点是否存在
+/// Check whether the vmouse device node exists
 #[cfg(target_os = "windows")]
 fn check_device_installed() -> (bool, bool, String) {
     use std::process::Command;
 
-    // 使用 PowerShell 的 Get-PnpDevice 检查设备状态
-    // 排除已删除但仍有残留记录的幽灵设备（FriendlyName 为空）
+    // Use PowerShell's Get-PnpDevice to check device status
+    // Exclude ghost devices left behind after removal (empty FriendlyName)
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     let output = Command::new("powershell")
@@ -112,10 +112,10 @@ fn check_device_installed() -> (bool, bool, String) {
         Ok(out) => {
             let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
             if stdout.is_empty() || stdout == "null" {
-                return (false, false, "未安装".to_string());
+                return (false, false, "Not installed".to_string());
             }
 
-            // 尝试解析 JSON
+            // Try to parse JSON
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&stdout) {
                 let status = json.get("Status").and_then(|v| v.as_str()).unwrap_or("Unknown");
                 let friendly = json.get("FriendlyName").and_then(|v| v.as_str()).unwrap_or("Zako Virtual Mouse");
@@ -123,39 +123,39 @@ fn check_device_installed() -> (bool, bool, String) {
 
                 let running = status == "OK" && problem == 0;
                 let status_text = if running {
-                    format!("{} - 正常运行", friendly)
+                    format!("{} - Running", friendly)
                 } else if problem == 21 {
-                    format!("{} - 需要重启", friendly)
+                    format!("{} - Needs restart", friendly)
                 } else {
-                    format!("{} - 状态: {} (问题码: {})", friendly, status, problem)
+                    format!("{} - Status: {} (problem code: {})", friendly, status, problem)
                 };
 
                 (true, running, status_text)
             } else {
-                // JSON 解析失败但有输出，说明设备存在
-                (true, false, format!("已安装（状态未知）"))
+                // JSON parse failed but output exists — device is present
+                (true, false, format!("Installed (status unknown)"))
             }
         }
         Err(e) => {
-            warn!("检测 vmouse 设备失败: {}", e);
-            (false, false, "检测失败".to_string())
+            warn!("Failed to detect vmouse device: {}", e);
+            (false, false, "Detection failed".to_string())
         }
     }
 }
 
 #[cfg(not(target_os = "windows"))]
 fn check_device_installed() -> (bool, bool, String) {
-    (false, false, "仅支持 Windows".to_string())
+    (false, false, "Windows only".to_string())
 }
 
-/// 读取 sunshine.conf 中的 virtual_mouse 配置
+/// Read `virtual_mouse` from sunshine.conf
 fn read_vmouse_config() -> bool {
     let config_path = PathBuf::from(sunshine::get_sunshine_install_path())
         .join("config")
         .join("sunshine.conf");
 
     if !config_path.exists() {
-        return true; // 默认启用
+        return true; // Enabled by default
     }
 
     match std::fs::read_to_string(&config_path) {
@@ -172,13 +172,13 @@ fn read_vmouse_config() -> bool {
                     }
                 }
             }
-            true // 默认启用
+            true // Enabled by default
         }
         Err(_) => true,
     }
 }
 
-/// 获取 vmouse 驱动状态
+/// Get vmouse driver status
 #[tauri::command]
 pub async fn get_vmouse_status() -> Result<VmouseStatus, String> {
     let (installed, running, status_text) = check_device_installed();
@@ -194,7 +194,7 @@ pub async fn get_vmouse_status() -> Result<VmouseStatus, String> {
     })
 }
 
-/// 安装 vmouse 驱动（复用 install-vmouse.bat）
+/// Install the vmouse driver (reuses install-vmouse.bat)
 #[tauri::command]
 pub async fn install_vmouse_driver() -> Result<String, String> {
     #[cfg(target_os = "windows")]
@@ -204,28 +204,28 @@ pub async fn install_vmouse_driver() -> Result<String, String> {
 
         if !install_bat.exists() {
             return Err(format!(
-                "安装脚本不存在: {}。请确认 Sunshine 安装完整。",
+                "Install script not found: {}. Please verify your Sunshine installation.",
                 install_bat.display()
             ));
         }
 
-        info!("调用 install-vmouse.bat 安装虚拟鼠标驱动...");
+        info!("Calling install-vmouse.bat to install the virtual mouse driver...");
         run_bat_elevated(&install_bat)?;
 
-        // 等待驱动加载
+        // Wait for the driver to load
         tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
 
-        info!("✅ vmouse 驱动安装完成");
-        Ok("虚拟鼠标驱动安装完成".to_string())
+        info!("✅ vmouse driver install complete");
+        Ok("Virtual mouse driver installed".to_string())
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持 Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }
 
-/// 卸载 vmouse 驱动（复用 uninstall-vmouse.bat）
+/// Uninstall the vmouse driver (reuses uninstall-vmouse.bat)
 #[tauri::command]
 pub async fn uninstall_vmouse_driver() -> Result<String, String> {
     #[cfg(target_os = "windows")]
@@ -235,41 +235,41 @@ pub async fn uninstall_vmouse_driver() -> Result<String, String> {
 
         if !uninstall_bat.exists() {
             return Err(format!(
-                "卸载脚本不存在: {}。请确认 Sunshine 安装完整。",
+                "Uninstall script not found: {}. Please verify your Sunshine installation.",
                 uninstall_bat.display()
             ));
         }
 
-        info!("调用 uninstall-vmouse.bat 卸载虚拟鼠标驱动...");
+        info!("Calling uninstall-vmouse.bat to uninstall the virtual mouse driver...");
         run_bat_elevated(&uninstall_bat)?;
 
         tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
-        info!("✅ vmouse 驱动卸载完成");
-        Ok("虚拟鼠标驱动已卸载".to_string())
+        info!("✅ vmouse driver uninstall complete");
+        Ok("Virtual mouse driver uninstalled".to_string())
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持 Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }
 
-/// 设置 sunshine.conf 中的 virtual_mouse 配置
+/// Set `virtual_mouse` in sunshine.conf
 #[tauri::command]
 pub async fn set_vmouse_config(enabled: bool) -> Result<String, String> {
-    // 读取当前完整配置
+    // Read the current full config
     let mut config_map = crate::vdd::read_full_sunshine_config().await
         .unwrap_or_default();
 
-    // 更新 virtual_mouse 字段
+    // Update the virtual_mouse field
     let value_str = if enabled { "enabled" } else { "disabled" };
     config_map.insert("virtual_mouse".to_string(), serde_json::json!(value_str));
 
-    debug!("📝 更新 virtual_mouse = {}", value_str);
+    debug!("📝 Updating virtual_mouse = {}", value_str);
 
-    // 通过 Sunshine API 保存
+    // Save via the Sunshine API
     sunshine::post_sunshine_config(&config_map).await?;
-    info!("✅ virtual_mouse 配置已更新: {}", value_str);
-    Ok(format!("虚拟鼠标已{}", if enabled { "启用" } else { "禁用" }))
+    info!("✅ virtual_mouse config updated: {}", value_str);
+    Ok(format!("Virtual mouse {}", if enabled { "enabled" } else { "disabled" }))
 }

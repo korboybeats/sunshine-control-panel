@@ -24,13 +24,13 @@
       @contextmenu="openContextMenu"
     />
 
-    <!-- 加载状态 -->
+    <!-- Loading state -->
     <div v-if="loading" class="apps-loading">
       <div class="loading-spinner"></div>
       <span>{{ t.apps.loading }}</span>
     </div>
 
-    <!-- 空状态 -->
+    <!-- Empty state -->
     <div v-else-if="displayApps.length === 0 && !loading" class="apps-empty">
       <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <rect x="2" y="2" width="8" height="8" rx="2"/><rect x="14" y="2" width="8" height="8" rx="2"/>
@@ -99,7 +99,7 @@
       @updated="onCoverUpdated"
     />
 
-    <!-- 启动错误提示 -->
+    <!-- Launch error toast -->
     <Transition name="toast">
       <div v-if="launchError" class="launch-error-toast">
         <span class="toast-icon">⚠️</span>
@@ -150,15 +150,15 @@ const {
   initProxy,
 } = useApps()
 
-// 右键菜单
+// Context menu
 const contextMenu = ref({ visible: false, x: 0, y: 0, app: null })
 
-// 启动助手面板
+// Launch-helper panel
 const helperPanel = ref({ open: false, appName: '', app: null })
 const { proxyUrl } = useApps()
 const { getActiveHelperIcons, helperPanelOpen } = useLaunchHelpers(t)
 
-// 同步面板状态到共享 composable（供 DesktopApp 控制器返回使用）
+// Sync panel state to the shared composable (used by DesktopApp's controller back-navigation)
 watch(() => helperPanel.value.open, (v) => { helperPanelOpen.value = v })
 watch(helperPanelOpen, (v) => { if (!v) helperPanel.value.open = false })
 
@@ -219,7 +219,7 @@ async function ctxOpenDir() {
   closeContextMenu()
 }
 
-// 封面选择弹窗
+// Cover picker modal
 const coverPicker = ref({ open: false, appName: '' })
 
 async function ctxUpdateCover() {
@@ -255,7 +255,7 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-// === 加载 & 空状态 ===
+// === Loading & empty state ===
 .apps-loading {
   display: flex;
   flex-direction: column;
@@ -289,7 +289,7 @@ onUnmounted(() => {
   .empty-hint { font-size: 13px; color: rgba(var(--fd-text-primary-rgb, 255, 255, 255), 0.2); }
 }
 
-// === 启动错误 Toast ===
+// === Launch error toast ===
 .launch-error-toast {
   position: fixed;
   bottom: 32px;

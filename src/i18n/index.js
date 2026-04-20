@@ -1,6 +1,6 @@
 import { createI18n } from 'vue-i18n'
 
-// 导入所有语言文件
+// Import all language files
 import en from './locales/en.js'
 import en_GB from './locales/en_GB.js'
 import en_US from './locales/en_US.js'
@@ -22,7 +22,7 @@ import tr from './locales/tr.js'
 import cs from './locales/cs.js'
 import bg from './locales/bg.js'
 
-// 支持的语言列表
+// List of supported languages
 export const supportedLocales = [
   { code: 'en', name: 'English' },
   { code: 'en_GB', name: 'English (UK)' },
@@ -46,7 +46,7 @@ export const supportedLocales = [
   { code: 'bg', name: 'Български' },
 ]
 
-// 创建 i18n 实例
+// Create the i18n instance
 export const i18n = createI18n({
   legacy: false, // Composition API mode
   locale: 'en_US', // Default language (English Edition)
@@ -75,15 +75,15 @@ export const i18n = createI18n({
   },
 })
 
-// 获取默认语言
+// Get the default locale
 export function getDefaultLocale() {
-  // 尝试从 localStorage 读取
+  // Try reading from localStorage first
   const saved = localStorage.getItem('sunshine-locale')
   if (saved && supportedLocales.find((l) => l.code === saved)) {
     return saved
   }
 
-  // 尝试从浏览器语言获取
+  // Try deriving from the browser language
   const browserLang = navigator.language || navigator.userLanguage
   const langCode = browserLang.split('-')[0]
   const locale = supportedLocales.find((l) => l.code === langCode || l.code === browserLang)
@@ -95,7 +95,7 @@ export function getDefaultLocale() {
   return 'en_US'
 }
 
-// 设置语言
+// Set the locale
 export function setLocale(locale) {
   if (supportedLocales.find((l) => l.code === locale)) {
     i18n.global.locale.value = locale

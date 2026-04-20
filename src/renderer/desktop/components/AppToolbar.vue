@@ -1,10 +1,10 @@
 <template>
   <div class="apps-toolbar fade-in">
     <h1 class="apps-title">
-      <span class="gradient-text">游戏库</span>
+      <span class="gradient-text">Game Library</span>
     </h1>
 
-    <!-- 筛选标签 -->
+    <!-- Filter tabs -->
     <div class="filter-tabs">
       <button
         v-for="tab in filterTabs"
@@ -21,7 +21,7 @@
 
     <div class="toolbar-spacer"></div>
 
-    <!-- 搜索 -->
+    <!-- Search -->
     <div class="apps-search" :class="{ focused: searchFocused }">
       <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/>
@@ -31,22 +31,22 @@
         :value="searchQuery"
         type="text"
         class="search-input"
-        placeholder="搜索..."
+        placeholder="Search..."
         @input="$emit('update:searchQuery', $event.target.value)"
         @focus="searchFocused = true"
         @blur="searchFocused = false"
       />
     </div>
 
-    <!-- 排序 -->
-    <button class="toolbar-btn" tabindex="0" @click="$emit('cycleSortMode')" :title="'排序: ' + sortLabel">
+    <!-- Sort -->
+    <button class="toolbar-btn" tabindex="0" @click="$emit('cycleSortMode')" :title="'Sort: ' + sortLabel">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 6h18M3 12h12M3 18h6"/>
       </svg>
     </button>
 
-    <!-- 网格大小 -->
-    <button class="toolbar-btn" tabindex="0" @click="$emit('cycleGridSize')" :title="'卡片大小: ' + gridSize">
+    <!-- Grid size -->
+    <button class="toolbar-btn" tabindex="0" @click="$emit('cycleGridSize')" :title="'Card size: ' + gridSize">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="7" height="7" rx="1"/>
         <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -55,8 +55,8 @@
       </svg>
     </button>
 
-    <!-- 视图切换 -->
-    <button class="toolbar-btn" tabindex="0" @click="$emit('toggleViewMode')" :title="viewMode === 'grid' ? '列表视图' : '网格视图'">
+    <!-- View toggle -->
+    <button class="toolbar-btn" tabindex="0" @click="$emit('toggleViewMode')" :title="viewMode === 'grid' ? 'List view' : 'Grid view'">
       <svg v-if="viewMode === 'grid'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
@@ -65,7 +65,7 @@
       </svg>
     </button>
 
-    <div class="apps-count">{{ totalCount }} 个应用</div>
+    <div class="apps-count">{{ totalCount }} apps</div>
   </div>
 </template>
 

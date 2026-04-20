@@ -9,18 +9,18 @@
   >
     <div class="update-dialog-content">
 
-      <!-- 更新说明 -->
+      <!-- Release notes -->
       <div v-if="updateInfo?.release_notes" class="release-notes">
         <div class="notes-content" v-html="parsedReleaseNotes"></div>
       </div>
 
-      <!-- 下载进度 (仅新版本) -->
+      <!-- Download progress (new version only) -->
       <div v-if="!isLatest && isDownloadInProgress" class="download-progress">
         <el-progress :percentage="downloadProgress" :stroke-width="8" />
         <p class="progress-text">{{ t.updateDialog.downloading.replace('{progress}', downloadProgress) }}</p>
       </div>
 
-      <!-- 安装提示 (仅新版本) -->
+      <!-- Install notice (new version only) -->
       <div v-if="!isLatest && isInstalling" class="install-notice">
         <el-alert type="warning" :closable="false" show-icon>
           <template #title>
@@ -91,7 +91,7 @@ const dialogTitle = computed(() => {
 
 const md = new MarkdownIt({ html: true, breaks: true, linkify: true })
 
-// 所有链接添加 target="_blank" rel="noopener"，让 Tauri 在系统浏览器中打开
+// Add target="_blank" rel="noopener" to all links so Tauri opens them in the system browser
 const defaultLinkRender = md.renderer.rules.link_open || ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
 md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   tokens[idx].attrSet('target', '_blank')

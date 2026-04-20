@@ -7,7 +7,7 @@
       </button>
     </template>
 
-    <!-- 格式工具栏 -->
+    <!-- Format toolbar -->
     <div class="format-toolbar">
       <div class="format-group">
         <button class="fmt-btn" @click="insertTag('B')" title="Bold"><b>B</b></button>
@@ -81,7 +81,7 @@ const textarea = ref(null)
 const color = ref('FFFFFF')
 const fontSize = ref(0)
 
-// ─── 格式标签插入 ───
+// ─── Format tag insertion ───
 function insertTag(tag) {
   const ta = textarea.value
   if (!ta) return
@@ -117,7 +117,7 @@ function insertRawTag(tag) {
   requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(newPos, newPos) })
 }
 
-// ─── OSD 操作 ───
+// ─── OSD actions ───
 async function applyOsd() {
   applying.value = true
   try {

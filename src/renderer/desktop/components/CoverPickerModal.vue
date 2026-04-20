@@ -4,24 +4,24 @@
       <div v-if="open" class="cover-modal-mask" @click.self="$emit('close')">
         <div class="cover-modal">
           <div class="modal-header">
-            <h3><Picture /> 更新封面 — {{ appName }}</h3>
+            <h3><Picture /> Update Cover — {{ appName }}</h3>
             <button class="modal-close" @click="$emit('close')">✕</button>
           </div>
 
-          <!-- 搜索栏 -->
+          <!-- Search bar -->
           <div class="search-bar">
             <input
               v-model="searchQuery"
               class="search-input"
-              placeholder="搜索 Steam 游戏..."
+              placeholder="Search Steam games..."
               @keyup.enter="doSearch"
             />
             <button class="search-btn" @click="doSearch" :disabled="searching">
-              {{ searching ? '搜索中...' : '搜索' }}
+              {{ searching ? 'Searching...' : 'Search' }}
             </button>
           </div>
 
-          <!-- 搜索结果 -->
+          <!-- Search results -->
           <div v-if="error" class="search-error">{{ error }}</div>
 
           <div v-if="candidates.length > 0" class="candidates-grid">
@@ -41,7 +41,7 @@
           </div>
 
           <div v-else-if="!searching && !error && searched" class="no-results">
-            未找到匹配结果
+            No matching results
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ const searched = ref(false)
 const error = ref('')
 const uploadingId = ref(null)
 
-// 打开时自动用 app 名搜索
+// When opened, auto-search using the app name
 watch(() => props.open, (v) => {
   if (v && props.appName) {
     searchQuery.value = props.appName
@@ -118,7 +118,7 @@ async function selectAndUpload(candidate) {
     emit('updated', props.appName)
     emit('close')
   } catch (e) {
-    error.value = `上传失败: ${e}`
+    error.value = `Upload failed: ${e}`
   } finally {
     uploadingId.value = null
   }
@@ -291,7 +291,7 @@ async function selectAndUpload(candidate) {
   font-size: 14px;
 }
 
-// 弹窗动画
+// Modal animation
 .cover-modal-enter-active { transition: opacity 0.2s ease; }
 .cover-modal-leave-active { transition: opacity 0.15s ease; }
 .cover-modal-enter-from, .cover-modal-leave-to { opacity: 0; }

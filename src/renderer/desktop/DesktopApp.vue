@@ -40,19 +40,19 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 
-// 桌面 UI 组件
+// Desktop UI components
 import DesktopWindow from './components/DesktopWindow.vue'
 import DesktopSidebar from './components/DesktopSidebar.vue'
 import ThemeEditor from './components/ThemeEditor.vue'
 import SplashScreen from './components/SplashScreen.vue'
 
-// 手柄支持
+// Gamepad support
 import { useGamepad, navigateFocus, confirmFocused } from './composables/useGamepad.js'
 import { useTheme } from './composables/useTheme.js'
 import { useLaunchHelpers } from './composables/useLaunchHelpers.js'
 import { useI18n } from './i18n/index.js'
 
-// 图标组件
+// Icon components
 import IconApps from './icons/IconApps.vue'
 import IconDashboard from './icons/IconDashboard.vue'
 import IconDevices from './icons/IconDevices.vue'
@@ -63,7 +63,7 @@ import IconPower from './icons/IconPower.vue'
 import IconPalette from './icons/IconPalette.vue'
 import IconLang from './icons/IconLang.vue'
 
-// 视图组件
+// View components
 import AppsView from './views/AppsView.vue'
 import DashboardView from './views/DashboardView.vue'
 import DevicesView from './views/DevicesView.vue'
@@ -71,16 +71,16 @@ import StreamView from './views/StreamView.vue'
 import ToolsView from './views/ToolsView.vue'
 import SettingsView from './views/SettingsView.vue'
 
-// 导入图标资源
+// Import icon resources
 import sunshineIcon from '../../assets/sunshine.ico'
 
 // i18n
 const { t, locale, toggleLocale } = useI18n()
 
-// 应用配置
+// App configuration
 const appTitle = 'FOUNDATION DESKTOP'
 
-// 主题
+// Theme
 const { themeVars, activePreset, presets, setVar, applyPreset, exportTheme, importTheme, wallpaper, wallpaperColors, setWallpaper, removeWallpaper } = useTheme()
 const themeEditorOpen = ref(false)
 const showSplash = ref(true)
@@ -96,10 +96,10 @@ function handleThemeImport() {
   if (json) importTheme(json)
 }
 
-// 导航状态 - 默认进入应用库页面
+// Navigation state — default to the Apps Library page
 const activeNav = ref('apps')
 
-// 主导航项
+// Primary navigation items
 const navItems = computed(() => [
   { id: 'apps', label: t.value.nav.apps, icon: IconApps, disabled: false },
   { id: 'dashboard', label: t.value.nav.dashboard, icon: IconDashboard, disabled: false },
@@ -108,15 +108,16 @@ const navItems = computed(() => [
   { id: 'tools', label: t.value.nav.tools, icon: IconTools, disabled: false },
 ])
 
-// 底部导航项
+// Bottom navigation items
 const bottomNavItems = computed(() => [
+  // 'lang' button label shows the OTHER language's name — keep native names for a language picker
   { id: 'lang', label: locale.value === 'zh' ? 'EN' : '中文', icon: IconLang, disabled: false },
   { id: 'theme', label: t.value.nav.theme, icon: IconPalette, disabled: false },
   { id: 'settings', label: t.value.nav.settings, icon: IconSettings, disabled: false },
   { id: 'exit', label: t.value.nav.exit, icon: IconPower, disabled: false },
 ])
 
-// 视图映射
+// View map
 const viewMap = {
   apps: AppsView,
   dashboard: DashboardView,
@@ -140,7 +141,7 @@ onMounted(async () => {
   }
 })
 
-// 导航点击处理
+// Handle navigation click
 async function handleNavClick(item) {
   if (item.disabled) return
   if (item.id === 'exit') {
@@ -165,7 +166,7 @@ async function handleNavClick(item) {
   activeNav.value = item.id
 }
 
-// 手柄导航
+// Gamepad navigation
 const allNavIds = computed(() => [
   ...navItems.filter(i => !i.disabled).map(i => i.id),
   ...bottomNavItems.filter(i => !i.disabled).map(i => i.id),
@@ -179,7 +180,7 @@ const { gamepadActive } = useGamepad({
     confirmFocused()
   },
   onBack() {
-    // B 按钮：优先关闭打开的抽屉面板，否则回到应用库首页
+    // B button: prefer closing an open drawer/panel, otherwise go back to the Apps Library home
     if (helperPanelOpen.value) {
       helperPanelOpen.value = false
     } else if (themeEditorOpen.value) {
@@ -189,7 +190,7 @@ const { gamepadActive } = useGamepad({
     }
   },
   onTabPrev() {
-    // LB：切换到上一个标签
+    // LB: switch to previous tab
     const ids = allNavIds.value
     const idx = ids.indexOf(activeNav.value)
     if (idx > 0) {
@@ -199,7 +200,7 @@ const { gamepadActive } = useGamepad({
     }
   },
   onTabNext() {
-    // RB：切换到下一个标签
+    // RB: switch to next tab
     const ids = allNavIds.value
     const idx = ids.indexOf(activeNav.value)
     if (idx < ids.length - 1) {
@@ -212,5 +213,5 @@ const { gamepadActive } = useGamepad({
 </script>
 
 <style lang="less" scoped>
-// 组件样式由各自的组件文件管理
+// Component styles are managed in their respective component files
 </style>

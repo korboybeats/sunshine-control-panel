@@ -1,13 +1,13 @@
 /**
- * AI HTTP 通信层
- * 负责与各类 AI 服务 API 的通信，通过 Tauri 代理绕过 CORS
+ * AI HTTP communication layer
+ * Handles communication with AI service APIs; uses the Tauri proxy to bypass CORS.
  */
 
 import { AI_PROVIDERS } from './aiProviders.js'
 
 /**
- * 通过 Tauri 后端代理发送 HTTP 请求（绕过 CORS）
- * 如果不在 Tauri 环境则回退到 fetch
+ * Send an HTTP request through the Tauri backend proxy (bypasses CORS).
+ * Falls back to fetch if not running in a Tauri environment.
  */
 export async function proxyFetch(url, method, headers, body) {
   const tauri = window.__TAURI__
@@ -22,7 +22,7 @@ export async function proxyFetch(url, method, headers, body) {
     })
     return JSON.parse(result)
   }
-  // 回退到直接 fetch（Web 环境）
+  // Fall back to direct fetch (web environment)
   const resp = await fetch(url, {
     method,
     headers: { ...headers, 'Content-Type': 'application/json' },
@@ -36,7 +36,7 @@ export async function proxyFetch(url, method, headers, body) {
 }
 
 /**
- * 获取供应商的 API 类型
+ * Get a provider's API type
  */
 export function getApiType(providerValue) {
   const provider = AI_PROVIDERS.find((p) => p.value === providerValue)
@@ -44,7 +44,7 @@ export function getApiType(providerValue) {
 }
 
 /**
- * 调用 OpenAI 兼容 API
+ * Call an OpenAI-compatible API
  */
 export async function callOpenAI(apiBase, apiKey, model, messages, maxTokens = 2048) {
   const headers = {}
@@ -63,7 +63,7 @@ export async function callOpenAI(apiBase, apiKey, model, messages, maxTokens = 2
 }
 
 /**
- * 调用 Anthropic Claude API
+ * Call the Anthropic Claude API
  */
 export async function callAnthropic(apiBase, apiKey, model, messages, maxTokens = 2048) {
   const systemMsg = messages.find((m) => m.role === 'system')?.content || ''
@@ -83,10 +83,10 @@ export async function callAnthropic(apiBase, apiKey, model, messages, maxTokens 
 }
 
 /**
- * 统一 LLM 调用入口
- * @param {object} config - AI 配置
- * @param {Array} messages - 消息列表
- * @param {number} maxTokens - 最大 token 数
+ * Unified LLM entry point
+ * @param {object} config - AI config
+ * @param {Array} messages - message list
+ * @param {number} maxTokens - max token count
  */
 export async function callLLM(config, messages, maxTokens = 2048) {
   const apiType = getApiType(config.provider)
@@ -97,13 +97,13 @@ export async function callLLM(config, messages, maxTokens = 2048) {
 }
 
 /**
- * 构建带图片的 vision 消息内容（多模态）
- * @param {string} text - 文本提示
- * @param {string} imageDataUrl - data:image/jpeg;base64,... 格式的图片
- * @returns 适用于 OpenAI/Anthropic vision API 的 content 数组
+ * Build vision message content with an image (multimodal)
+ * @param {string} text - text prompt
+ * @param {string} imageDataUrl - image in data:image/jpeg;base64,... format
+ * @returns content array suitable for OpenAI / Anthropic vision APIs
  */
 export function buildVisionContent(text, imageDataUrl) {
-  // 从 data URL 提取 base64 和 media type
+  // Extract base64 and media type from the data URL
   const match = imageDataUrl.match(/^data:(image\/\w+);base64,(.+)$/)
   if (!match) return text // fallback to text-only
 
@@ -119,7 +119,7 @@ export function buildVisionContent(text, imageDataUrl) {
 }
 
 /**
- * 构建 Anthropic 格式的 vision 消息内容
+ * Build Anthropic-format vision message content
  */
 export function buildAnthropicVisionContent(text, imageDataUrl) {
   const match = imageDataUrl.match(/^data:(image\/\w+);base64,(.+)$/)
@@ -137,7 +137,7 @@ export function buildAnthropicVisionContent(text, imageDataUrl) {
 }
 
 /**
- * 调用带视觉能力的 LLM（发送截屏 + 文本提示）
+ * Call a vision-capable LLM (send screenshot + text prompt)
  */
 export async function callVisionLLM(config, systemPrompt, userText, imageDataUrl, maxTokens = 512) {
   const apiType = getApiType(config.provider)
@@ -151,7 +151,7 @@ export async function callVisionLLM(config, systemPrompt, userText, imageDataUrl
     ], maxTokens)
   }
 
-  // OpenAI 兼容（GPT-4o, Qwen-VL, GLM-4V 等）
+  // OpenAI-compatible (GPT-4o, Qwen-VL, GLM-4V, etc.)
   const content = buildVisionContent(userText, imageDataUrl)
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -161,12 +161,12 @@ export async function callVisionLLM(config, systemPrompt, userText, imageDataUrl
 }
 
 /**
- * 从 API 拉取可用模型列表
+ * Fetch the list of available models from the API
  */
 export async function fetchModels(apiBase, apiKey, providerValue) {
   const apiType = getApiType(providerValue)
 
-  // Anthropic 不支持 /models 列表接口
+  // Anthropic does not provide a /models listing endpoint
   if (apiType === 'anthropic') return []
 
   if (!apiBase) return []

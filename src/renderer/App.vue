@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-// 简单的 Electron 主应用入口
+// Simple Electron main app entry point
 </script>
 
 <style lang="less" scoped>

@@ -1,11 +1,11 @@
 /**
- * Tauri 兼容性 Polyfill
- * 为了兼容原有的代码，提供与 Electron 类似的全局 API
+ * Tauri compatibility polyfill
+ * Exposes Electron-like globals so the existing code keeps working.
  */
 
 import { darkMode, openExternalUrl, vdd, sunshine, tools } from './tauri-adapter.js'
 
-// IPC 通道映射表
+// IPC channel mapping
 const IPC_HANDLERS = {
   'vdd:loadSettings': vdd.loadSettings,
   'vdd:saveSettings': vdd.saveSettings,
@@ -17,25 +17,25 @@ const IPC_HANDLERS = {
 }
 
 /**
- * 获取文件的本地路径（Electron 兼容 API）
- * @param {File} file - File 对象
- * @returns {string} 文件的 Object URL 或路径
+ * Get the local path for a File (Electron-compatible API)
+ * @param {File} file - File object
+ * @returns {string} the file's Object URL or path
  */
 const getPathForFile = (file) => {
   if (!file) {
-    console.error('❌ getPathForFile: file 参数为空')
+    console.error('❌ getPathForFile: file argument is empty')
     return ''
   }
 
-  // 优先使用 File.path（非标准，但某些环境支持）
+  // Prefer File.path (non-standard, but supported in some environments)
   if (file.path) {
     return file.path
   }
 
-  // 创建 Object URL 供立即使用
+  // Create an Object URL for immediate use
   const objectUrl = URL.createObjectURL(file)
 
-  // 异步转换为 Data URL（更持久）
+  // Asynchronously convert to a Data URL (more durable)
   const reader = new FileReader()
   reader.onload = ({ target }) => {
     window.dispatchEvent(
@@ -49,7 +49,7 @@ const getPathForFile = (file) => {
   return objectUrl
 }
 
-// 模拟 Electron 的 window.electron API
+// Emulate Electron's window.electron API
 if (typeof window !== 'undefined') {
   window.electron = {
     ipcRenderer: {
@@ -58,8 +58,8 @@ if (typeof window !== 'undefined') {
         if (handler) {
           return handler(data)
         }
-        console.error(`未知的 IPC channel: ${channel}`)
-        return { success: false, message: '未实现的功能' }
+        console.error(`Unknown IPC channel: ${channel}`)
+        return { success: false, message: 'Feature not implemented' }
       },
     },
     webUtils: { getPathForFile },
@@ -68,7 +68,7 @@ if (typeof window !== 'undefined') {
   window.darkMode = darkMode
 }
 
-// 检测是否为生产环境
+// Detect whether we're in production
 const isProductionEnv = () => {
   if (typeof __PROD__ !== 'undefined') return __PROD__ === true
   if (typeof __DEV__ !== 'undefined') return __DEV__ === false
@@ -79,11 +79,11 @@ const isProductionEnv = () => {
   }
 }
 
-// 检测是否为 Tauri 环境
+// Detect whether we're in a Tauri environment
 const isTauriEnv = () => 
   typeof window !== 'undefined' && (window.__TAURI__ || window.isTauri)
 
-// 禁用右键菜单的函数（仅在生产环境）
+// Function to disable the right-click menu (production only)
 let contextMenuHandler = null
 let keydownHandler = null
 
@@ -92,7 +92,7 @@ const disableContextMenu = () => {
     return
   }
   
-  // 移除旧的事件监听器
+  // Remove old event listeners
   if (contextMenuHandler) {
     document.removeEventListener('contextmenu', contextMenuHandler, true)
   }
@@ -100,13 +100,13 @@ const disableContextMenu = () => {
     document.removeEventListener('keydown', keydownHandler, true)
   }
   
-  // 禁用右键菜单
+  // Disable the right-click menu
   contextMenuHandler = (e) => {
     e.preventDefault()
     return false
   }
-  
-  // 禁用开发者工具快捷键
+
+  // Disable DevTools shortcuts
   const blockedKeys = new Set([
     123,  // F12
   ])
@@ -126,7 +126,7 @@ const disableContextMenu = () => {
   document.addEventListener('keydown', keydownHandler, true)
 }
 
-// 主题切换功能
+// Theme switching
 export function initTheme() {
   if (typeof document === 'undefined') return
 
@@ -142,7 +142,7 @@ export function initTheme() {
   mediaQuery.addEventListener('change', (e) => updateTheme(e.matches))
 }
 
-// 监听导航事件（SPA 应用）
+// Listen for navigation events (SPA apps)
 const initNavigationListener = () => {
   if (typeof window === 'undefined' || !window.navigation) return
   
@@ -152,7 +152,7 @@ const initNavigationListener = () => {
   })
 }
 
-// 自动初始化
+// Auto-initialize
 if (typeof document !== 'undefined') {
   const init = () => {
     initTheme()

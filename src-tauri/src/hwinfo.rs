@@ -1,4 +1,4 @@
-// HWiNFO 共享内存读取模块
+// HWiNFO shared-memory reader module
 
 #[cfg(target_os = "windows")]
 use windows::Win32::System::Memory::*;
@@ -7,14 +7,14 @@ use windows::Win32::Foundation::*;
 
 use serde::{Deserialize, Serialize};
 
-// ─── HWiNFO Shared Memory 常量 ───
+// ─── HWiNFO Shared Memory constants ───
 
 #[cfg(target_os = "windows")]
 const HWINFO_SENSORS_STRING_LEN: usize = 128;
 #[cfg(target_os = "windows")]
 const HWINFO_UNIT_STRING_LEN: usize = 16;
 
-// ─── HWiNFO 传感器类型 ───
+// ─── HWiNFO sensor types ───
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SensorReadingType {
@@ -45,7 +45,7 @@ impl From<u32> for SensorReadingType {
     }
 }
 
-// ─── 数据结构 ───
+// ─── Data structures ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HwInfoSensor {
@@ -77,8 +77,8 @@ pub struct HwInfoData {
     pub readings: Vec<HwInfoReading>,
 }
 
-// ─── 共享内存头结构 ───
-// 参考 HWiNFO SDK: _HWiNFO_SENSORS_SHARED_MEM2
+// ─── Shared memory header structure ───
+// Reference: HWiNFO SDK _HWiNFO_SENSORS_SHARED_MEM2
 //
 // Offset  Size  Field
 // 0       4     dwSignature ('HWiS')
@@ -92,13 +92,13 @@ pub struct HwInfoData {
 // 36      4     dwSizeOfReadingElement
 // 40      4     dwNumReadingElements
 //
-// Sensor Element (每个至少 ~260+ 字节):
+// Sensor Element (~260+ bytes each):
 // 0       4     dwSensorID
 // 4       4     dwSensorInst
 // 8       128   szSensorNameOrig
 // 136     128   szSensorNameUser
 //
-// Reading Element (每个至少 ~560+ 字节):
+// Reading Element (~560+ bytes each):
 // 0       4     tReading (SensorReadingType)
 // 4       4     dwSensorIndex
 // 8       4     dwReadingID
@@ -138,28 +138,28 @@ fn read_f64(ptr: *const u8) -> f64 {
     unsafe { *(ptr as *const f64) }
 }
 
-/// 从 HWiNFO 共享内存读取所有传感器数据
+/// Read all sensor data from HWiNFO shared memory
 #[cfg(target_os = "windows")]
 pub fn read_hwinfo_shared_memory() -> Result<HwInfoData, String> {
     use windows::core::s;
 
     unsafe {
         let handle = OpenFileMappingA(FILE_MAP_READ.0, false, s!("Global\\HWiNFO_SENS_SM2"))
-            .map_err(|e| format!("无法打开 HWiNFO 共享内存: {}。请确保 HWiNFO 正在运行且已启用 Shared Memory Support", e))?;
+            .map_err(|e| format!("Failed to open HWiNFO shared memory: {}. Make sure HWiNFO is running with Shared Memory Support enabled", e))?;
 
         let view = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
         let ptr = view.Value as *const u8;
         if ptr.is_null() {
             let _ = CloseHandle(handle);
-            return Err("无法映射 HWiNFO 共享内存".to_string());
+            return Err("Failed to map HWiNFO shared memory".to_string());
         }
 
-        // 读取头结构
+        // Read the header
         let signature = read_u32(ptr);
         if signature != 0x53695748 {
             let _ = UnmapViewOfFile(view);
             let _ = CloseHandle(handle);
-            return Err(format!("HWiNFO 共享内存签名无效: 0x{:08X}", signature));
+            return Err(format!("Invalid HWiNFO shared memory signature: 0x{:08X}", signature));
         }
 
         let version = read_u32(ptr.add(4));
@@ -174,7 +174,7 @@ pub fn read_hwinfo_shared_memory() -> Result<HwInfoData, String> {
         let reading_size = read_u32(ptr.add(36)) as usize;
         let reading_count = read_u32(ptr.add(40)) as usize;
 
-        // 读取传感器
+        // Read sensors
         let mut sensors = Vec::with_capacity(sensor_count);
         for i in 0..sensor_count {
             let base = ptr.add(sensor_offset + i * sensor_size);
@@ -186,7 +186,7 @@ pub fn read_hwinfo_shared_memory() -> Result<HwInfoData, String> {
             });
         }
 
-        // 读取传感器读数
+        // Read sensor readings
         let mut readings = Vec::with_capacity(reading_count);
         for i in 0..reading_count {
             let base = ptr.add(reading_offset + i * reading_size);
@@ -218,19 +218,19 @@ pub fn read_hwinfo_shared_memory() -> Result<HwInfoData, String> {
 
 #[cfg(not(target_os = "windows"))]
 pub fn read_hwinfo_shared_memory() -> Result<HwInfoData, String> {
-    Err("HWiNFO 仅支持 Windows".to_string())
+    Err("HWiNFO is only supported on Windows".to_string())
 }
 
-// ─── Tauri 命令 ───
+// ─── Tauri commands ───
 
-/// 获取 HWiNFO 传感器列表（传感器+读数名称，不含实时值）
+/// Get the list of HWiNFO sensors (sensor + reading names, no live values)
 #[tauri::command]
 pub fn hwinfo_get_sensors() -> Result<HwInfoData, String> {
     read_hwinfo_shared_memory()
 }
 
-/// 获取指定传感器读数的实时值
-/// reading_ids: 要查询的读数索引列表，空则返回全部
+/// Get live values for the specified sensor readings
+/// reading_ids: list of reading indices to query; empty returns all
 #[tauri::command]
 pub fn hwinfo_get_readings(reading_ids: Vec<u32>) -> Result<Vec<HwInfoReading>, String> {
     let data = read_hwinfo_shared_memory()?;
@@ -245,7 +245,7 @@ pub fn hwinfo_get_readings(reading_ids: Vec<u32>) -> Result<Vec<HwInfoReading>, 
     }
 }
 
-/// 检查 HWiNFO 共享内存是否可用
+/// Check whether HWiNFO shared memory is available
 #[tauri::command]
 pub fn hwinfo_check_available() -> Result<bool, String> {
     match read_hwinfo_shared_memory() {

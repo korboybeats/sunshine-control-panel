@@ -22,17 +22,17 @@
         <div v-else class="cover-placeholder">
           <span class="placeholder-letter">{{ app.name?.[0] || '?' }}</span>
         </div>
-        <!-- 收藏角标 -->
+        <!-- Favorite badge -->
         <div v-if="isFavorite(app.name)" class="favorite-badge" @click.stop="$emit('toggleFavorite', app.name)">★</div>
-        <!-- 启动助手角标 -->
+        <!-- Launch helper badge -->
         <div v-if="helperIcons(app.name).length" class="helper-badges">
           <span v-for="(icon, i) in helperIcons(app.name)" :key="i" class="helper-badge-icon">{{ icon }}</span>
         </div>
-        <!-- Hover 遮罩 -->
+        <!-- Hover overlay -->
         <div class="tile-overlay">
           <span class="play-icon">▶</span>
         </div>
-        <!-- 启动动画 -->
+        <!-- Launch animation -->
         <div v-if="launchingApp === app.name" class="launch-overlay">
           <div class="launch-spinner"></div>
           <span>{{ t.appContext.launching }}</span>

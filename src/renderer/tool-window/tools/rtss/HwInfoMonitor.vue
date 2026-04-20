@@ -8,17 +8,17 @@
       <ToggleSwitch :modelValue="injecting" @update:modelValue="toggleInject" :disabled="!available" />
     </template>
 
-    <!-- 不可用提示 -->
+    <!-- Unavailable hint -->
     <div v-if="!available && !loading" class="unavailable-hint">
       <WarningFilled class="warn-icon" />
       <span>{{ t.hwinfo.unavailable }}</span>
       <div class="hint-sub">{{ t.hwinfo.enableHint }}</div>
     </div>
 
-    <!-- 加载中 -->
+    <!-- Loading -->
     <div v-else-if="loading" class="loading-hint">{{ t.hwinfo.loading }}</div>
 
-    <!-- 传感器选择 -->
+    <!-- Sensor selection -->
     <template v-else>
       <input
         v-model="searchQuery"
@@ -79,7 +79,7 @@ const selectedIds = ref(new Set())
 const sensorGroups = ref([])
 let pollTimer = null
 
-// 传感器分组结构
+// Sensor grouping
 function buildGroups(data) {
   const groups = []
   if (!data) return groups
@@ -150,7 +150,7 @@ async function toggleInject(val) {
 
 async function startInject() {
   if (selectedIds.value.size === 0) {
-    emit('message', '请先选择要监控的传感器', 'warning')
+    emit('message', 'Please select at least one sensor to monitor', 'warning')
     return
   }
   injecting.value = true
@@ -161,7 +161,7 @@ async function startInject() {
 function stopInject() {
   injecting.value = false
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
-  // 清除 OSD 中的 HWiNFO 数据
+  // Clear HWiNFO data from the OSD
   try { invoke('rtss_set_osd', { text: '' }).catch(() => {}) } catch {}
 }
 
@@ -169,7 +169,7 @@ async function pollAndInject() {
   try {
     const ids = [...selectedIds.value]
     const readings = await invoke('hwinfo_get_readings', { readingIds: ids })
-    // 构建 OSD 文本
+    // Build OSD text
     const lines = readings.map(r => {
       const label = r.label_user || r.label_original
       const val = r.value.toFixed(1)
@@ -177,7 +177,7 @@ async function pollAndInject() {
     })
     const osdText = lines.join('\n')
     await invoke('rtss_set_osd', { text: osdText })
-    // 同时更新显示值
+    // Also refresh displayed values
     await refreshValues()
   } catch (e) {
     emit('message', String(e), 'error')

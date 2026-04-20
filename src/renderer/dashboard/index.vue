@@ -1,8 +1,8 @@
 <template>
   <div class="dashboard-container">
-    <h1 class="dashboard-title">控制面板</h1>
+    <h1 class="dashboard-title">Control Panel</h1>
     <div class="grid-container">
-      <!-- 快捷入口卡片 -->
+      <!-- Shortcut entry cards -->
       <a 
         v-for="(item, index) in shortcutItems" 
         :key="index" 
@@ -22,54 +22,54 @@
 <script setup>
 import { reactive } from 'vue';
 
-// 快捷入口配置数据
+// Shortcut entry config data
 const shortcutItems = reactive([
   {
     icon: '🔗',
-    title: '配对',
-    description: '开始配对',
+    title: 'Pair',
+    description: 'Start pairing',
     path: '/pin'
   },
   {
     icon: '🛡️',
-    title: '',
-    description: '安全与隐私设置',
+    title: 'Security',
+    description: 'Security and privacy settings',
     path: '/security.html'
   },
   {
     icon: '🌐',
-    title: '网络设置',
-    description: '网络连接配置',
+    title: 'Network',
+    description: 'Network connection settings',
     path: '/network.html'
   },
   {
     icon: '💾',
-    title: '存储管理',
-    description: '存储空间设置',
+    title: 'Storage',
+    description: 'Storage space settings',
     path: '/storage.html'
   },
   {
     icon: '🖥️',
-    title: '显示设置',
-    description: '显示与分辨率设置',
+    title: 'Display',
+    description: 'Display and resolution settings',
     path: '/display.html'
   },
   {
     icon: '🔔',
-    title: '通知中心',
-    description: '通知管理设置',
+    title: 'Notifications',
+    description: 'Notification settings',
     path: '/notifications.html'
   },
   {
     icon: '🔌',
-    title: '客户端管理',
-    description: '配对客户端设置',
+    title: 'Clients',
+    description: 'Paired client management',
     path: '/pin'
   },
   {
     icon: '🔋',
-    title: '电源设置',
-    description: '电源管理选项',
+    title: 'Power',
+    description: 'Power management options',
     path: '/power-settings'
   }
 ]);

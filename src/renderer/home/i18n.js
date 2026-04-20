@@ -1,6 +1,7 @@
 /**
- * 多语言翻译配置
  * Internationalization (i18n) translations
+ * NOTE: The `zh:` block is the Chinese translation map used when the home page
+ * is displayed to Chinese-speaking users. Do not translate its values to English.
  */
 
 export const translations = {

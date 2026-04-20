@@ -10,102 +10,102 @@ pub async fn restart_graphics_driver() -> Result<String, String> {
     {
         use std::os::windows::process::CommandExt;
         
-        // 从注册表动态获取 Sunshine 安装路径
+        // Dynamically read the Sunshine install path from the registry
         let sunshine_path = std::path::PathBuf::from(sunshine::get_sunshine_install_path());
         let restart_exe = sunshine_path.join("tools").join("restart64.exe");
-        
+
         if !restart_exe.exists() {
-            return Err("找不到 restart64.exe".to_string());
+            return Err("restart64.exe not found".to_string());
         }
-        
-        // 使用 PowerShell 以管理员权限运行
+
+        // Run via PowerShell with admin privileges
         let ps_command = format!(
             r#"Start-Process '{}' -Verb RunAs -WindowStyle Hidden"#,
             restart_exe.display()
         );
-        
-        // CREATE_NO_WINDOW = 0x08000000，用于隐藏 PowerShell 窗口
+
+        // CREATE_NO_WINDOW = 0x08000000, used to hide the PowerShell window
         const CREATE_NO_WINDOW: u32 = 0x08000000;
-        
+
         Command::new("powershell")
             .args(&["-Command", &ps_command])
             .creation_flags(CREATE_NO_WINDOW)
             .spawn()
             .map_err(|e| e.to_string())?;
-        
-        Ok("已请求重启显卡驱动".to_string())
+
+        Ok("Graphics driver restart requested".to_string())
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持 Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }
 
-/// 以管理员权限重启 GUI
+/// Restart the GUI with administrator privileges
 #[tauri::command]
 pub async fn restart_as_admin(app_handle: tauri::AppHandle) -> Result<String, String> {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
         
-        // 获取当前可执行文件路径
+        // Get the current executable path
         let current_exe = env::current_exe()
-            .map_err(|e| format!("获取当前程序路径失败: {}", e))?;
-        
-        info!("🔄 准备以管理员权限重启 GUI");
-        debug!("   当前程序: {:?}", current_exe);
-        
-        // 使用 PowerShell 的 Start-Process -Verb RunAs 来提升权限
+            .map_err(|e| format!("Failed to get current program path: {}", e))?;
+
+        info!("🔄 Preparing to restart GUI with admin privileges");
+        debug!("   Current program: {:?}", current_exe);
+
+        // Use PowerShell's Start-Process -Verb RunAs to elevate privileges
         let exe_path = current_exe.to_string_lossy().to_string();
-        
-        // 创建 PowerShell 命令来以管理员身份启动
+
+        // Build the PowerShell command to start as administrator
         let ps_command = format!(
             "Start-Sleep -Milliseconds 500; Start-Process -FilePath '{}' -Verb RunAs",
-            exe_path.replace("'", "''")  // 转义单引号
+            exe_path.replace("'", "''")  // Escape single quotes
         );
-        
-        debug!("   PowerShell 命令: {}", ps_command);
-        
+
+        debug!("   PowerShell command: {}", ps_command);
+
         // CREATE_NO_WINDOW = 0x08000000
         const CREATE_NO_WINDOW: u32 = 0x08000000;
-        
-        // 启动提升权限的新实例（PowerShell 会等待 500ms 后启动）
+
+        // Launch a new elevated instance (PowerShell waits 500ms before starting it)
         Command::new("powershell")
             .args(&["-NoProfile", "-Command", &ps_command])
             .creation_flags(CREATE_NO_WINDOW)
             .spawn()
-            .map_err(|e| format!("启动管理员实例失败: {}", e))?;
-        
-        info!("✅ 已请求以管理员权限启动新实例（500ms 后）");
-        
-        // 立即退出当前实例，让新实例可以绑定端口
+            .map_err(|e| format!("Failed to launch admin instance: {}", e))?;
+
+        info!("✅ New instance requested with admin privileges (starting in 500ms)");
+
+        // Exit the current instance immediately so the new one can bind the port
         tokio::spawn(async move {
-            info!("🚪 准备退出当前实例...");
-            
-            // 先关闭主窗口
+            info!("🚪 Preparing to exit current instance...");
+
+            // Close the main window first
             if let Some(window) = app_handle.get_webview_window("main") {
                 let _ = window.close();
-                debug!("   关闭主窗口");
+                debug!("   Closing main window");
             }
-            
-            // 短暂延迟后退出，让窗口关闭并释放资源
+
+            // Short delay, then exit so the window can close and release resources
             tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-            info!("🚪 退出当前实例，释放资源");
+            info!("🚪 Exiting current instance, releasing resources");
             app_handle.exit(0);
         });
-        
-        Ok("正在以管理员权限重启...".to_string())
+
+        Ok("Restarting with admin privileges...".to_string())
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持 Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }
 
 
-/// 检查当前程序是否以管理员权限运行
+/// Check whether the current process is running with administrator privileges
 #[tauri::command]
 pub fn is_running_as_admin() -> Result<bool, String> {
     #[cfg(target_os = "windows")]
@@ -118,15 +118,15 @@ pub fn is_running_as_admin() -> Result<bool, String> {
             let mut token: HANDLE = HANDLE::default();
             let process = GetCurrentProcess();
             
-            // 打开当前进程的访问令牌
+            // Open the access token for the current process
             if OpenProcessToken(process, TOKEN_QUERY, &mut token).is_err() {
                 return Ok(false);
             }
-            
+
             let mut elevation = TOKEN_ELEVATION { TokenIsElevated: 0 };
             let mut return_length = 0u32;
-            
-            // 获取令牌提升信息
+
+            // Get the token elevation info
             let result = GetTokenInformation(
                 token,
                 TokenElevation,
@@ -147,45 +147,45 @@ pub fn is_running_as_admin() -> Result<bool, String> {
     
     #[cfg(not(target_os = "windows"))]
     {
-        // 非 Windows 系统检查 root 权限
+        // On non-Windows systems, check for root privileges
         Ok(unsafe { libc::geteuid() == 0 })
     }
 }
 
-/// 在外部浏览器中打开 URL
+/// Open a URL in the external browser
 pub fn open_url_in_browser(url: &str) {
     let url = url.to_string();
-    
+
     tauri::async_runtime::spawn(async move {
-        info!("🌐 正在打开外部浏览器...");
-        
+        info!("🌐 Opening external browser...");
+
         #[cfg(target_os = "windows")]
         {
             if let Err(e) = Command::new("cmd")
                 .args(&["/c", "start", "", &url])
                 .spawn()
             {
-                error!("❌ 打开 URL 失败: {}", e);
+                error!("❌ Failed to open URL: {}", e);
             } else {
-                info!("✅ 已在外部浏览器中打开: {}", url);
+                info!("✅ Opened in external browser: {}", url);
             }
         }
-        
+
         #[cfg(not(target_os = "windows"))]
         {
             if let Err(e) = Command::new("xdg-open")
                 .arg(&url)
                 .spawn()
             {
-                error!("❌ 打开 URL 失败: {}", e);
+                error!("❌ Failed to open URL: {}", e);
             } else {
-                info!("✅ 已在外部浏览器中打开: {}", url);
+                info!("✅ Opened in external browser: {}", url);
             }
         }
     });
 }
 
-/// Tauri 命令：在外部浏览器中打开 URL
+/// Tauri command: open a URL in the external browser
 #[tauri::command]
 pub async fn open_external_url(url: String) -> Result<bool, String> {
     if !url.starts_with("http") {
@@ -211,7 +211,7 @@ pub async fn open_external_url(url: String) -> Result<bool, String> {
     Ok(true)
 }
 
-/// 执行 PowerShell 命令（内部辅助函数）
+/// Execute a PowerShell command (internal helper)
 #[cfg(target_os = "windows")]
 pub fn execute_powershell_command(command: &str, error_context: &str) -> Result<(), String> {
     use std::os::windows::process::CommandExt;

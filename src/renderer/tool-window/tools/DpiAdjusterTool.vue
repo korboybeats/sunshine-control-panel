@@ -75,9 +75,9 @@ const loadCurrentDpi = async () => {
   try {
     const currentDpi = await invoke('get_current_dpi');
     dpiValue.value = currentDpi;
-    console.log('当前 DPI:', currentDpi);
+    console.log('Current DPI:', currentDpi);
   } catch (error) {
-    console.error('获取当前 DPI 失败:', error);
+    console.error('Failed to fetch current DPI:', error);
   } finally {
     loading.value = false;
   }
@@ -100,7 +100,7 @@ const applyDpi = async () => {
           messageType.value = 'warning';
         }
       } catch (error) {
-        console.error('重新获取 DPI 失败:', error);
+        console.error('Failed to re-fetch DPI:', error);
       }
     }, 1000);
     

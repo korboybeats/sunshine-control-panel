@@ -5,7 +5,7 @@
       <ToggleSwitch :modelValue="active" @update:modelValue="toggleMonitoring" />
     </template>
 
-    <!-- 指标选择 -->
+    <!-- Metric selection -->
     <div class="metric-groups">
       <div v-for="group in metricGroups" :key="group.id" class="metric-group">
         <div class="metric-group-label">{{ group.label }}</div>
@@ -23,20 +23,21 @@
       </div>
     </div>
 
-    <!-- 样式配置 -->
+    <!-- Style config -->
     <div class="monitor-style">
       <div class="style-row">
         <label>{{ t.rtssTool.headerText }}</label>
         <input v-model="config.header_text" class="style-input" placeholder="☀ Foundation Sunshine" />
       </div>
       <div class="style-row">
-        <label>{{ t.rtssTool.cjkFont || 'CJK 矢量字体' }}</label>
+        <label>{{ t.rtssTool.cjkFont || 'CJK Vector Font' }}</label>
         <select v-model="config.cjk_font" class="fmt-select wide">
-          <option value="">{{ t.rtssTool.cjkFontDisabled || '不启用（仅 ASCII）' }}</option>
-          <option value="Microsoft YaHei">微软雅黑</option>
-          <option value="SimHei">黑体</option>
-          <option value="SimSun">宋体</option>
-          <option value="KaiTi">楷体</option>
+          <option value="">{{ t.rtssTool.cjkFontDisabled || 'Disabled (ASCII only)' }}</option>
+          <!-- Option labels show native font names so Chinese users recognize them -->
+          <option value="Microsoft YaHei">Microsoft YaHei (微软雅黑)</option>
+          <option value="SimHei">SimHei (黑体)</option>
+          <option value="SimSun">SimSun (宋体)</option>
+          <option value="KaiTi">KaiTi (楷体)</option>
         </select>
       </div>
       <div class="style-row">
@@ -64,7 +65,7 @@
       </div>
     </div>
 
-    <!-- OSD 预览 -->
+    <!-- OSD preview -->
     <div v-if="active && snapshot.osd_text" class="osd-preview">
       <div class="osd-preview-label">{{ t.rtssTool.osdPreview }}</div>
       <pre class="osd-preview-text">{{ snapshot.osd_text }}</pre>
@@ -114,7 +115,7 @@ const config = reactive(loadPersistedConfig())
 const availableMetrics = ref([])
 let pollTimer = null
 
-// 持久化 config 到 localStorage
+// Persist config to localStorage
 watch(config, (v) => {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)) } catch {}
 }, { deep: true })
@@ -122,8 +123,8 @@ watch(config, (v) => {
 const metricGroups = computed(() => {
   const isZh = locale.value === 'zh'
   const groups = [
-    { id: 'session', label: isZh ? '串流会话' : 'Streaming', metrics: [] },
-    { id: 'process', label: isZh ? '进程性能' : 'Process', metrics: [] },
+    { id: 'session', label: isZh ? '串流会话' : 'Streaming', metrics: [] }, // zh label preserved for Chinese users
+    { id: 'process', label: isZh ? '进程性能' : 'Process', metrics: [] }, // zh label preserved for Chinese users
   ]
   for (const m of availableMetrics.value) {
     const grp = groups.find(g => g.id === m.group)
@@ -132,7 +133,7 @@ const metricGroups = computed(() => {
   return groups.filter(g => g.metrics.length > 0)
 })
 
-// ─── 方法 ───
+// ─── Methods ───
 function toggleMetric(id) {
   const idx = config.metrics.indexOf(id)
   if (idx >= 0) config.metrics.splice(idx, 1)
@@ -147,7 +148,7 @@ async function toggleMonitoring(val) {
 
 async function startMonitoring() {
   try {
-    // 深拷贝 config，避免 reactive Proxy 序列化问题
+    // Deep clone config to avoid reactive Proxy serialization issues
     const rawConfig = JSON.parse(JSON.stringify(config))
     await invoke('rtss_start_monitoring', { config: rawConfig })
     active.value = true
@@ -195,7 +196,7 @@ async function loadState() {
     if (snap.active) {
       active.value = true
       Object.assign(snapshot, snap)
-      // 同步后端运行中的 config（若存在）
+      // Sync the running config from the backend (if present)
       if (snap.config) {
         Object.assign(config, snap.config)
       }

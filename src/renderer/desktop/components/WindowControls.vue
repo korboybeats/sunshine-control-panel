@@ -3,7 +3,7 @@
     <button 
       class="control-btn minimize-btn" 
       @click="handleMinimize" 
-      title="最小化"
+      title="Minimize"
       :disabled="disabled"
     >
       <svg viewBox="0 0 10 1">
@@ -13,7 +13,7 @@
     <button 
       class="control-btn maximize-btn" 
       @click="handleToggleMaximize" 
-      :title="isMaximized ? '还原' : '最大化'"
+      :title="isMaximized ? 'Restore' : 'Maximize'"
       :disabled="disabled"
     >
       <svg v-if="!isMaximized" viewBox="0 0 10 10">
@@ -27,7 +27,7 @@
     <button 
       class="control-btn close-btn" 
       @click="handleClose" 
-      title="关闭"
+      title="Close"
       :disabled="disabled"
     >
       <svg viewBox="0 0 10 10">

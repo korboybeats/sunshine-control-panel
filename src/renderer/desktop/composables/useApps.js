@@ -10,19 +10,19 @@ export function useApps() {
   const searchQuery = ref('')
   const launchingApp = ref(null)
   const failedImages = ref(new Set())
-  const coverVersions = ref({}) // 封面版本号，用于强制刷新图片缓存
+  const coverVersions = ref({}) // Cover version tag, used to force image cache refresh
 
-  // 视图选项（持久化）
+  // View options (persisted)
   const viewMode = ref(localStorage.getItem(`${STORAGE_KEY}-view`) || 'grid')
   const gridSize = ref(localStorage.getItem(`${STORAGE_KEY}-grid`) || 'medium')
   const sortMode = ref(localStorage.getItem(`${STORAGE_KEY}-sort`) || 'name')
   const activeFilter = ref('all')
 
-  // 收藏和最近启动（持久化）
+  // Favorites and recently launched (persisted)
   const favorites = ref(JSON.parse(localStorage.getItem(`${STORAGE_KEY}-favorites`) || '[]'))
   const recentHistory = ref(JSON.parse(localStorage.getItem(`${STORAGE_KEY}-recent`) || '[]'))
 
-  // 持久化（防抖批量写入）
+  // Persistence (debounced batch write)
   let persistTimer = null
   function persistSettings() {
     clearTimeout(persistTimer)
@@ -40,18 +40,18 @@ export function useApps() {
   watch(favorites, persistSettings, { deep: true })
   watch(recentHistory, persistSettings, { deep: true })
 
-  // 筛选标签
+  // Filter tabs
   const filterTabs = computed(() => [
-    { id: 'all', label: '全部', count: apps.value.length },
-    { id: 'favorites', label: '收藏', count: favorites.value.length },
-    { id: 'recent', label: '最近', count: recentHistory.value.length },
+    { id: 'all', label: 'All', count: apps.value.length },
+    { id: 'favorites', label: 'Favorites', count: favorites.value.length },
+    { id: 'recent', label: 'Recent', count: recentHistory.value.length },
   ])
 
   const sortLabel = computed(() => {
     switch (sortMode.value) {
-      case 'name': return '名称'
-      case 'recent': return '最近使用'
-      default: return '名称'
+      case 'name': return 'Name'
+      case 'recent': return 'Recently Used'
+      default: return 'Name'
     }
   })
 
@@ -79,7 +79,7 @@ export function useApps() {
       .slice(0, 6)
   })
 
-  // 排序 + 筛选 + 搜索
+  // Sort + filter + search
   const displayApps = computed(() => {
     let list = [...apps.value]
 
@@ -115,7 +115,7 @@ export function useApps() {
       })
     }
 
-    // 收藏置顶
+    // Pin favorites to the top
     if (activeFilter.value === 'all') {
       const favSet = new Set(favorites.value)
       list.sort((a, b) => {
@@ -143,7 +143,7 @@ export function useApps() {
   function getAppImageUrl(app) {
     if (failedImages.value.has(app.name)) return null
     const ver = coverVersions.value[app.name]
-    // 如果刚上传了新封面，直接用 appName.png（上传 API 按 app name 保存）
+    // If a new cover was just uploaded, use appName.png (upload API saves by app name)
     if (ver) {
       return `${proxyUrl.value}/boxart/${encodeURIComponent(app.name)}.png?v=${ver}`
     }
@@ -170,7 +170,7 @@ export function useApps() {
     failedImages.value.delete(appName)
     failedImages.value = new Set(failedImages.value)
     coverVersions.value = { ...coverVersions.value, [appName]: Date.now() }
-    // 浅拷贝 apps 触发子组件重新渲染（getAppImageUrl 作为 Function prop 不会触发更新）
+    // Shallow-copy `apps` to trigger child re-render (getAppImageUrl as a Function prop doesn't)
     apps.value = [...apps.value]
   }
 
@@ -195,7 +195,7 @@ export function useApps() {
     launchError.value = ''
 
     if (!app.cmd) {
-      launchError.value = `"${app.name}" 没有配置启动命令`
+      launchError.value = `"${app.name}" has no launch command configured`
       console.warn('[useApps] app has no cmd:', app.name)
       setTimeout(() => { launchError.value = '' }, 4000)
       return

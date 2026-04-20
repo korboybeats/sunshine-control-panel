@@ -1,46 +1,46 @@
 # Desktop UI Components
 
-专门的桌面应用 UI 组件库，用于构建现代化的桌面应用界面。
+A dedicated UI component library for desktop apps, for building modern desktop-app interfaces.
 
-## 安装/导入
+## Install / Import
 
 ```javascript
-// 导入所有组件
+// Import everything
 import { DesktopWindow, TitleBar, DesktopSidebar, DesktopCard, DesktopGrid } from './components'
 
-// 或单独导入
+// Or import individually
 import DesktopWindow from './components/DesktopWindow.vue'
 ```
 
-## 组件列表
+## Component List
 
-### 1. DesktopWindow - 桌面窗口容器
+### 1. DesktopWindow — desktop window container
 
-桌面应用的主容器组件，提供窗口结构、背景效果和布局管理。
+The main container component for a desktop app. Provides window structure, background effects and layout management.
 
 **Props:**
-- `title` (String): 窗口标题
-- `icon` (String): 窗口图标路径
-- `showTitleBar` (Boolean): 是否显示标题栏，默认 `true`
-- `hasSidebar` (Boolean): 是否有侧边栏，默认 `false`
-- `theme` (String): 主题样式，`dark` 或 `light`，默认 `dark`
+- `title` (String): Window title
+- `icon` (String): Window icon path
+- `showTitleBar` (Boolean): Whether to show the title bar. Default: `true`
+- `hasSidebar` (Boolean): Whether a sidebar is present. Default: `false`
+- `theme` (String): Theme style — `dark` or `light`. Default: `dark`
 
 **Slots:**
-- `titlebar`: 自定义标题栏
-- `sidebar`: 侧边栏内容
-- `default`: 主内容区域
-- `footer`: 页脚内容
+- `titlebar`: Custom title bar
+- `sidebar`: Sidebar content
+- `default`: Main content area
+- `footer`: Footer content
 
-**使用示例:**
+**Example:**
 ```vue
 <template>
-  <DesktopWindow title="我的应用" :has-sidebar="true">
+  <DesktopWindow title="My App" :has-sidebar="true">
     <template #sidebar>
       <DesktopSidebar :items="navItems" />
     </template>
     
     <template #default>
-      <div>主内容</div>
+      <div>Main content</div>
     </template>
   </DesktopWindow>
 </template>
@@ -48,74 +48,74 @@ import DesktopWindow from './components/DesktopWindow.vue'
 
 ---
 
-### 2. TitleBar - 标题栏组件
+### 2. TitleBar — title bar component
 
-自定义窗口标题栏，支持拖拽、图标和窗口控制按钮。
+Custom window title bar. Supports dragging, icons and window control buttons.
 
 **Props:**
-- `title` (String): 标题文本
-- `icon` (String): 图标路径
-- `draggable` (Boolean): 是否可拖拽，默认 `true`
-- `showControls` (Boolean): 是否显示窗口控制按钮，默认 `true`
+- `title` (String): Title text
+- `icon` (String): Icon path
+- `draggable` (Boolean): Whether draggable. Default: `true`
+- `showControls` (Boolean): Whether to show window control buttons. Default: `true`
 
 **Slots:**
-- `left`: 左侧内容
-- `center`: 中间内容
-- `right`: 右侧内容
+- `left`: Left-side content
+- `center`: Center content
+- `right`: Right-side content
 
-**使用示例:**
+**Example:**
 ```vue
-<TitleBar title="应用标题" icon="/icon.png">
+<TitleBar title="App Title" icon="/icon.png">
   <template #left>
-    <span>自定义左侧内容</span>
+    <span>Custom left-side content</span>
   </template>
 </TitleBar>
 ```
 
 ---
 
-### 3. WindowControls - 窗口控制按钮
+### 3. WindowControls — window control buttons
 
-窗口的最小化、最大化、关闭按钮组件。
+Minimize / maximize / close buttons for the window.
 
 **Props:**
-- `disabled` (Boolean): 是否禁用，默认 `false`
+- `disabled` (Boolean): Whether disabled. Default: `false`
 
 **Events:**
-- `minimize`: 点击最小化
-- `maximize`: 点击最大化
-- `close`: 点击关闭
+- `minimize`: Minimize clicked
+- `maximize`: Maximize clicked
+- `close`: Close clicked
 
-**使用示例:**
+**Example:**
 ```vue
 <WindowControls @close="handleClose" />
 ```
 
 ---
 
-### 4. DesktopSidebar - 侧边栏导航
+### 4. DesktopSidebar — sidebar navigation
 
-桌面应用的侧边栏导航组件，支持图标、标签、徽章等。
+Sidebar navigation for desktop apps. Supports icons, labels, badges, etc.
 
 **Props:**
-- `items` (Array): 导航项数组
-  - `id` (String): 唯一标识
-  - `label` (String): 标签文本
-  - `icon` (Component): 图标组件
-  - `badge` (String): 徽章文本（可选）
-  - `disabled` (Boolean): 是否禁用（可选）
-- `bottomItems` (Array): 底部导航项数组（格式同 items）
-- `activeItem` (String): 当前激活的项 ID
-- `collapsed` (Boolean): 是否收起，默认 `false`
-- `collapsible` (Boolean): 是否可收起，默认 `false`
-- `showDivider` (Boolean): 是否显示分隔线，默认 `true`
+- `items` (Array): Nav item array
+  - `id` (String): Unique ID
+  - `label` (String): Label text
+  - `icon` (Component): Icon component
+  - `badge` (String): Badge text (optional)
+  - `disabled` (Boolean): Whether disabled (optional)
+- `bottomItems` (Array): Bottom nav items (same format as items)
+- `activeItem` (String): ID of the currently active item
+- `collapsed` (Boolean): Whether collapsed. Default: `false`
+- `collapsible` (Boolean): Whether collapsible. Default: `false`
+- `showDivider` (Boolean): Whether to show a divider. Default: `true`
 
 **Events:**
-- `item-click`: 点击导航项时触发
-- `update:activeItem`: 激活项变化时触发
-- `update:collapsed`: 收起状态变化时触发
+- `item-click`: Fired when a nav item is clicked
+- `update:activeItem`: Fired when the active item changes
+- `update:collapsed`: Fired when collapsed state changes
 
-**使用示例:**
+**Example:**
 ```vue
 <DesktopSidebar
   :items="navItems"
@@ -125,75 +125,75 @@ import DesktopWindow from './components/DesktopWindow.vue'
 />
 ```
 
-**导航项格式:**
+**Nav-item format:**
 ```javascript
 const navItems = [
   {
     id: 'dashboard',
-    label: '仪表盘',
+    label: 'Dashboard',
     icon: IconDashboard,
-    badge: '3', // 可选
-    disabled: false // 可选
+    badge: '3', // optional
+    disabled: false // optional
   }
 ]
 ```
 
 ---
 
-### 5. DesktopCard - 桌面卡片
+### 5. DesktopCard — desktop card
 
-桌面应用的卡片容器组件，支持多种样式和交互。
+Card container component for desktop apps. Supports multiple styles and interactions.
 
 **Props:**
-- `title` (String): 卡片标题
-- `icon` (Component): 标题图标
-- `variant` (String): 样式变体，`default` | `primary` | `secondary` | `success` | `warning` | `danger`，默认 `default`
-- `hoverable` (Boolean): 是否显示悬停效果，默认 `false`
-- `clickable` (Boolean): 是否可点击，默认 `false`
-- `showHeader` (Boolean): 是否显示头部，默认 `true`
-- `noPadding` (Boolean): 是否移除内边距，默认 `false`
+- `title` (String): Card title
+- `icon` (Component): Title icon
+- `variant` (String): Style variant — `default` | `primary` | `secondary` | `success` | `warning` | `danger`. Default: `default`
+- `hoverable` (Boolean): Show hover effect. Default: `false`
+- `clickable` (Boolean): Whether clickable. Default: `false`
+- `showHeader` (Boolean): Whether to show the header. Default: `true`
+- `noPadding` (Boolean): Remove inner padding. Default: `false`
 
 **Slots:**
-- `title`: 自定义标题（会覆盖 title prop）
-- `actions`: 头部操作按钮
-- `default`: 卡片内容
-- `footer`: 卡片底部
+- `title`: Custom title (overrides the title prop)
+- `actions`: Header action buttons
+- `default`: Card content
+- `footer`: Card footer
 
 **Events:**
-- `click`: 点击卡片时触发（需要设置 `clickable` 为 `true`）
+- `click`: Fired when the card is clicked (requires `clickable` = `true`)
 
-**使用示例:**
+**Example:**
 ```vue
 <DesktopCard 
-  title="系统信息" 
+  title="System Info" 
   :icon="IconInfo"
   variant="primary"
   hoverable
 >
   <template #actions>
-    <button>操作</button>
+    <button>Action</button>
   </template>
   
-  <div>卡片内容</div>
+  <div>Card content</div>
   
   <template #footer>
-    <button>确定</button>
+    <button>OK</button>
   </template>
 </DesktopCard>
 ```
 
 ---
 
-### 6. DesktopGrid - 网格布局
+### 6. DesktopGrid — grid layout
 
-响应式网格布局组件，用于排列多个卡片或其他元素。
+Responsive grid layout component for arranging cards or other elements.
 
 **Props:**
-- `cols` (Number): 列数，1-6，默认 `2`
-- `gap` (String): 间距，`xs` | `sm` | `md` | `lg` | `xl`，默认 `md`
-- `responsive` (Boolean): 是否响应式，默认 `true`
+- `cols` (Number): Column count (1–6). Default: `2`
+- `gap` (String): Spacing — `xs` | `sm` | `md` | `lg` | `xl`. Default: `md`
+- `responsive` (Boolean): Whether responsive. Default: `true`
 
-**使用示例:**
+**Example:**
 ```vue
 <DesktopGrid cols="4" gap="lg">
   <DesktopCard v-for="item in items" :key="item.id">
@@ -208,30 +208,30 @@ const navItems = [
 
 ### useWindowControls
 
-窗口控制 composable，提供窗口操作功能。
+Window-control composable — provides window operations.
 
-**返回值:**
+**Return value:**
 ```javascript
 {
-  tauriWindow,      // Tauri 窗口对象
-  isMaximized,      // 是否最大化
-  isMinimized,      // 是否最小化
-  isFocused,        // 是否聚焦
-  minimize,         // 最小化函数
-  maximize,         // 最大化函数
-  unmaximize,       // 还原函数
-  toggleMaximize,   // 切换最大化状态
-  close,            // 关闭窗口
-  show,             // 显示窗口
-  hide,             // 隐藏窗口
-  setFocus,         // 聚焦窗口
-  center,           // 居中窗口
-  setSize,          // 设置窗口大小
-  getSize           // 获取窗口大小
+  tauriWindow,      // Tauri window object
+  isMaximized,      // Whether maximized
+  isMinimized,      // Whether minimized
+  isFocused,        // Whether focused
+  minimize,         // Minimize function
+  maximize,         // Maximize function
+  unmaximize,       // Restore function
+  toggleMaximize,   // Toggle maximize state
+  close,            // Close window
+  show,             // Show window
+  hide,             // Hide window
+  setFocus,         // Focus window
+  center,           // Center window
+  setSize,          // Set window size
+  getSize           // Get window size
 }
 ```
 
-**使用示例:**
+**Example:**
 ```vue
 <script setup>
 import { useWindowControls } from '../composables'
@@ -242,11 +242,11 @@ const { isMaximized, minimize, maximize, close } = useWindowControls()
 
 ---
 
-## 完整使用示例
+## Complete Usage Example
 
 ```vue
 <template>
-  <DesktopWindow title="我的桌面应用" :has-sidebar="true">
+  <DesktopWindow title="My Desktop App" :has-sidebar="true">
     <template #sidebar>
       <DesktopSidebar
         :items="navItems"
@@ -289,9 +289,9 @@ function handleNavClick(item) {
 
 ---
 
-## 样式定制
+## Styling and Theming
 
-所有组件都支持通过 CSS 变量进行主题定制：
+All components support theming via CSS variables:
 
 ```less
 :root {
@@ -304,18 +304,18 @@ function handleNavClick(item) {
 
 ---
 
-## 最佳实践
+## Best Practices
 
-1. **使用 DesktopWindow 作为根容器**：提供完整的桌面应用布局
-2. **组合使用组件**：DesktopSidebar + DesktopCard + DesktopGrid
-3. **利用 Composables**：使用 `useWindowControls` 管理窗口状态
-4. **响应式设计**：使用 DesktopGrid 的响应式特性适配不同屏幕
-5. **主题一致性**：使用统一的 variant 和主题变量
+1. **Use DesktopWindow as the root container** — provides the full desktop-app layout.
+2. **Compose components** — DesktopSidebar + DesktopCard + DesktopGrid.
+3. **Use the composables** — `useWindowControls` for window-state management.
+4. **Responsive design** — take advantage of DesktopGrid's responsive behavior.
+5. **Theme consistency** — use the same variant scheme and theme variables across the app.
 
 ---
 
-## 注意事项
+## Notes
 
-- 组件使用 `-webkit-app-region: drag` 实现窗口拖拽，需要合理设置 `no-drag` 区域
-- 窗口控制功能仅在 Tauri 环境中可用，浏览器环境会优雅降级
-- 某些组件依赖特定的 CSS 变量，确保已引入相应的样式文件
+- Components use `-webkit-app-region: drag` to enable window dragging; make sure to define `no-drag` regions where needed.
+- Window-control features only work inside a Tauri environment; browser contexts degrade gracefully.
+- Some components rely on specific CSS variables — make sure the relevant style files are imported.

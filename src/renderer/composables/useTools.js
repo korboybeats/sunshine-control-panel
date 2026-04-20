@@ -2,85 +2,85 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { openExternalUrl, tools, vmouse } from '@/tauri-adapter.js'
 
 /**
- * 工具操作 Composable
+ * Tool-actions Composable
  */
 export function useTools() {
   /**
-   * 公共确认对话框操作
-   * @param {string} message - 确认消息
-   * @param {string} title - 对话框标题
-   * @param {function} action - 执行的操作
-   * @param {string} successMsg - 成功消息
+   * Common confirm-dialog action helper
+   * @param {string} message - confirm message
+   * @param {string} title - dialog title
+   * @param {function} action - action to execute
+   * @param {string} successMsg - success message
    */
   const confirmAction = async (message, title, action, successMsg) => {
     try {
       await ElMessageBox.confirm(message, title, {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
         type: 'warning',
       })
       await action()
       ElMessage.success(successMsg)
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error(`操作失败: ${error}`)
+        ElMessage.error(`Operation failed: ${error}`)
       }
     }
   }
 
   /**
-   * 卸载 VDD
+   * Uninstall VDD
    */
   const uninstallVdd = async () => {
     await confirmAction(
-      '确定要卸载虚拟显示器驱动吗？此操作需要管理员权限。',
-      '确认卸载',
+      'Uninstall the virtual display driver? This requires administrator privileges.',
+      'Confirm uninstall',
       tools.uninstallVddDriver,
-      '卸载请求已发送'
+      'Uninstall request sent'
     )
   }
 
   /**
-   * 重启显卡驱动
+   * Restart the graphics driver
    */
   const restartDriver = async () => {
     await confirmAction(
-      '确定要重启显卡驱动吗？这将暂时中断屏幕显示。',
-      '确认重启',
+      'Restart the graphics driver? The screen will briefly go black.',
+      'Confirm restart',
       tools.restartGraphicsDriver,
-      '重启请求已发送'
+      'Restart request sent'
     )
   }
 
   /**
-   * 重启 Sunshine 服务
+   * Restart the Sunshine service
    */
   const restartSunshine = async () => {
     await confirmAction(
-      '确定要重启 Sunshine 服务吗？这将断开当前所有连接。\n\n如果弹出 UAC 提示，请点击"是"以确认。\nSunshine 服务将在几秒钟内重启。',
-      '确认重启',
+      'Restart the Sunshine service? All active connections will be dropped.\n\nIf a UAC prompt appears, click "Yes" to confirm.\nSunshine should come back up within a few seconds.',
+      'Confirm restart',
       tools.restartSunshineService,
-      '重启请求已发送'
+      'Restart request sent'
     )
   }
 
   /**
-   * 以用户模式重启 Sunshine（非服务模式）
+   * Restart Sunshine in user mode (not service mode)
    */
   const restartSunshineInUserMode = async () => {
     await confirmAction(
-      '确定要以用户模式重启 Sunshine 吗？\n\n这将：\n1. 停止 Sunshine 服务\n2. 关闭所有 Sunshine 进程\n3. 以用户模式启动 Sunshine \n\n这将断开当前所有连接。',
-      '确认重启',
+      'Restart Sunshine in user mode?\n\nThis will:\n1. Stop the Sunshine service\n2. Kill all Sunshine processes\n3. Start Sunshine in user mode\n\nAll active connections will be dropped.',
+      'Confirm restart',
       tools.restartSunshineInUserMode,
-      '用户模式重启请求已发送'
+      'User-mode restart request sent'
     )
   }
 
   /**
-   * 打开串流计时器
+   * Open the stream timer window
    */
   const openTimer = async () => {
-    await createWindow('/stop-clock-canvas/index.html', '串流计时器', {
+    await createWindow('/stop-clock-canvas/index.html', 'Stream Timer', {
       prefix: 'timer',
       width: 1080,
       height: 600,
@@ -88,69 +88,69 @@ export function useTools() {
   }
 
   /**
-   * 打开外部 URL
-   * @param {string} url - 要打开的URL
+   * Open an external URL
+   * @param {string} url - URL to open
    */
   const openUrl = async (url) => {
     await openExternalUrl(url)
   }
 
   /**
-   * 清理无用的封面图片和临时文件
+   * Clean up unused cover images and temp files
    */
   const cleanupCovers = async () => {
     try {
       const { invoke } = await import('@tauri-apps/api/core')
 
-      // 首先检查是否以管理员权限运行
+      // First check whether we're running as admin
       const isRunningAsAdmin = await invoke('is_running_as_admin')
 
       if (!isRunningAsAdmin) {
-        // 不是管理员，提示重启
-        await ElMessageBox.confirm('清理临时文件需要管理员权限。\n\n是否以管理员身份重启应用？', '需要管理员权限', {
-          confirmButtonText: '以管理员重启',
-          cancelButtonText: '取消',
+        // Not admin — prompt for restart
+        await ElMessageBox.confirm('Cleaning temp files requires administrator privileges.\n\nRestart the app as administrator?', 'Admin privileges required', {
+          confirmButtonText: 'Restart as admin',
+          cancelButtonText: 'Cancel',
           type: 'warning',
         })
 
-        // 用户确认后，调用重启为管理员
+        // User confirmed — restart as admin
         await restartAsAdmin()
         return
       }
 
-      // 已经是管理员，继续执行清理
+      // Already admin — continue with cleanup
       await ElMessageBox.confirm(
-        '此操作将删除：\n1. 未被应用使用的封面图片\n2. config 目录下的 temp_ 临时文件\n\n是否继续？',
-        '清理无用文件',
+        'This will delete:\n1. Cover images no longer referenced by any app\n2. temp_ files under the config directory\n\nContinue?',
+        'Clean up unused files',
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+          confirmButtonText: 'OK',
+          cancelButtonText: 'Cancel',
           type: 'warning',
         }
       )
 
-      // 显示加载提示
+      // Show a loading toast
       const loading = ElMessage({
-        message: '正在清理无用文件...',
+        message: 'Cleaning up unused files...',
         type: 'info',
         duration: 0,
       })
 
-      // 调用 Tauri 命令
+      // Call the Tauri command
       const result = await invoke('cleanup_unused_covers')
 
       loading.close()
 
-      // 显示结果
+      // Show result
       if (result.success) {
         if (result.deleted_count > 0) {
           ElMessageBox.alert(
-            `${result.message}\n\n删除的文件数: ${result.deleted_count}\n释放的空间: ${(
+            `${result.message}\n\nFiles deleted: ${result.deleted_count}\nSpace freed: ${(
               result.freed_space / 1024
             ).toFixed(2)} KB`,
-            '清理完成',
+            'Cleanup complete',
             {
-              confirmButtonText: '确定',
+              confirmButtonText: 'OK',
               type: 'success',
             }
           )
@@ -158,72 +158,72 @@ export function useTools() {
           ElMessage.success(result.message)
         }
       } else {
-        ElMessage.error('清理失败: ' + result.message)
+        ElMessage.error('Cleanup failed: ' + result.message)
       }
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('清理文件失败:', error)
-        ElMessage.error('清理文件失败: ' + error)
+        console.error('Cleanup failed:', error)
+        ElMessage.error('Cleanup failed: ' + error)
       }
     }
   }
 
   /**
-   * 以管理员权限重启 GUI
+   * Restart the GUI with administrator privileges
    */
   const restartAsAdmin = async () => {
     try {
-      // 确认对话框
-      await ElMessageBox.confirm('将以管理员权限重启应用，当前窗口会关闭。是否继续？', '提升权限', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      // Confirm dialog
+      await ElMessageBox.confirm('The app will restart with administrator privileges; the current window will close. Continue?', 'Elevate privileges', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
         type: 'warning',
       })
 
-      // 显示提示
-      ElMessage.info('正在请求管理员权限...')
+      // Show prompt
+      ElMessage.info('Requesting administrator privileges...')
 
-      // 调用 Tauri 命令
+      // Call the Tauri command
       const { invoke } = await import('@tauri-apps/api/core')
       await invoke('restart_as_admin')
 
-      // 如果到这里说明成功请求了重启
-      ElMessage.success('正在以管理员权限重启...')
+      // If we reached here, the restart was successfully requested
+      ElMessage.success('Restarting as administrator...')
     } catch (error) {
       if (error !== 'cancel') {
-        console.error('重启失败:', error)
-        ElMessage.error('重启失败: ' + error)
+        console.error('Restart failed:', error)
+        ElMessage.error('Restart failed: ' + error)
       }
     }
   }
 
   /**
-   * 检查更新，返回 UpdateInfo（包含 is_latest 标记）由调用方处理展示
+   * Check for updates. Returns UpdateInfo (includes `is_latest`) — the caller decides how to display.
    */
   const checkForUpdates = async () => {
     try {
       const { invoke } = await import('@tauri-apps/api/core')
 
-      ElMessage.info('正在检查更新...')
+      ElMessage.info('Checking for updates...')
 
       const result = await invoke('check_for_updates')
 
       if (result) {
-        return result // 返回更新信息（包含 is_latest 标记），让调用者处理
+        return result // Return update info (with `is_latest`) so the caller handles display
       }
       return null
     } catch (error) {
-      console.error('检查更新失败:', error)
-      ElMessage.error('检查更新失败: ' + error)
+      console.error('Update check failed:', error)
+      ElMessage.error('Update check failed: ' + error)
       return null
     }
   }
 
   /**
-   * 公共窗口创建函数
-   * @param {string} url - 窗口URL路径
-   * @param {string} title - 窗口标题
-   * @param {object} options - 窗口配置选项
+   * Shared window-creation helper
+   * @param {string} url - URL path for the window
+   * @param {string} title - window title
+   * @param {object} options - window config options
    */
   const createWindow = async (url, title, options = {}) => {
     try {
@@ -240,45 +240,45 @@ export function useTools() {
         center: true,
       })
 
-      // 等待窗口创建完成后显示
+      // Wait for the window to be created, then show it
       newWindow.once('tauri://created', async () => {
-        console.log(`✅ ${title}窗口已创建`)
+        console.log(`✅ ${title} window created`)
         await newWindow.show()
         await newWindow.setFocus()
-        console.log(`✅ ${title}窗口已显示`)
+        console.log(`✅ ${title} window shown`)
       })
 
       newWindow.once('tauri://error', (e) => {
-        console.error(`❌ ${title}窗口创建失败:`, e)
-        ElMessage.error(`${title}窗口创建失败`)
+        console.error(`❌ Failed to create ${title} window:`, e)
+        ElMessage.error(`Failed to create ${title} window`)
       })
     } catch (error) {
-      console.error(`❌ 打开${title}失败:`, error)
-      ElMessage.error(`打开${title}失败: ${error.message}`)
+      console.error(`❌ Failed to open ${title}:`, error)
+      ElMessage.error(`Failed to open ${title}: ${error.message}`)
     }
   }
 
   /**
-   * 安装虚拟鼠标驱动
+   * Install the virtual-mouse driver
    */
   const installVmouse = async () => {
     await confirmAction(
-      '将安装虚拟鼠标驱动，此操作需要管理员权限。\n安装后可能需要重启系统才能生效。',
-      '确认安装',
+      'Install the virtual mouse driver. This requires administrator privileges.\nA system restart may be needed for the driver to take effect.',
+      'Confirm install',
       vmouse.install,
-      '安装请求已发送'
+      'Install request sent'
     )
   }
 
   /**
-   * 卸载虚拟鼠标驱动
+   * Uninstall the virtual-mouse driver
    */
   const uninstallVmouse = async () => {
     await confirmAction(
-      '确定要卸载虚拟鼠标驱动吗？此操作需要管理员权限。\nSunshine 将回退到 SendInput 方式。',
-      '确认卸载',
+      'Uninstall the virtual mouse driver? This requires administrator privileges.\nSunshine will fall back to SendInput-based mouse input.',
+      'Confirm uninstall',
       vmouse.uninstall,
-      '卸载请求已发送'
+      'Uninstall request sent'
     )
   }
 

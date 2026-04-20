@@ -102,7 +102,7 @@ async function load() {
     const data = await invoke('rtss_get_osd_properties', { profile: null })
     Object.assign(props, data)
   } catch (e) {
-    console.warn('获取 OSD 属性失败:', e)
+    console.warn('Failed to fetch OSD properties:', e)
   }
 }
 

@@ -22,21 +22,21 @@ mod moonlight_web;
 use log::info;
 
 fn main() {
-    // 设置 WebView2 浏览器参数以优化 GPU 占用和安全策略
+    // Set WebView2 browser arguments to optimize GPU usage and security policy
     #[cfg(target_os = "windows")]
     unsafe {
         std::env::set_var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", [
-            // 安全：忽略自签名证书错误（连接本地 Sunshine）
+            // Security: ignore self-signed certificate errors (for local Sunshine connections)
             "--ignore-certificate-errors",
-            // 节流：激进的后台/隐藏标签页定时器节流
+            // Throttling: aggressive background / hidden-tab timer throttling
             "--enable-features=IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes",
-            // GPU 优化：禁用 Edge 特有的 UI 覆盖层（减少不必要的 GPU 合成层）
+            // GPU optimization: disable Edge-specific UI overlays (fewer unnecessary GPU compositor layers)
             "--disable-features=msWebOOUI",
-            // GPU 优化：禁用 GPU 着色器磁盘缓存，减少 VRAM 占用
+            // GPU optimization: disable the GPU shader disk cache to reduce VRAM usage
             "--disable-gpu-shader-disk-cache",
-            // GPU 优化：关闭 GPU 光栅化抗锯齿（控制面板 UI 无需 MSAA）
+            // GPU optimization: turn off GPU rasterization anti-aliasing (control panel UI does not need MSAA)
             "--gpu-rasterization-msaa-sample-count=0",
-            // GPU 优化：限制渲染进程数量，减少 GPU 上下文切换开销
+            // GPU optimization: limit the number of renderer processes, reducing GPU context switch overhead
             "--renderer-process-limit=1",
         ].join(" "));
     }
@@ -53,9 +53,9 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
-            // 初始化日志系统（需要在 setup 中获取 app handle）
+            // Initialize the logging system (needs the app handle from setup)
             logger::init_logger(app.handle().clone());
-            info!("🚀 Sunshine Control Panel 启动中...");
+            info!("🚀 Sunshine Control Panel starting...");
             
             app::setup_application(app)
         })

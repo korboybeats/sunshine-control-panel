@@ -9,9 +9,9 @@ async function ensureInvoke() {
 }
 
 /**
- * 调用 Tauri 后端命令
- * @param {string} cmd - 命令名称
- * @param {object} params - 参数
+ * Invoke a Tauri backend command
+ * @param {string} cmd - command name
+ * @param {object} params - parameters
  * @returns {Promise<any>}
  */
 export async function tauriInvoke(cmd, params = {}) {

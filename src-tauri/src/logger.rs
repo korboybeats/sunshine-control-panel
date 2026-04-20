@@ -6,7 +6,7 @@ use chrono::Local;
 use std::fs;
 use std::path::PathBuf;
 
-/// 日志条目结构
+/// Log entry structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEntry {
     pub timestamp: String,
@@ -17,7 +17,7 @@ pub struct LogEntry {
     pub line: Option<u32>,
 }
 
-/// 日志收集器状态
+/// Log collector state
 pub struct LogCollector {
     logs: Arc<Mutex<Vec<LogEntry>>>,
     max_logs: usize,
@@ -38,7 +38,7 @@ impl LogCollector {
     }
 
     pub fn add_log(&self, record: &Record) {
-        // 提取文件名（只保留文件名，不包含路径）
+        // Extract the file name (only the leaf, no path)
         let file = record.file().map(|f| {
             f.split('/').last()
                 .or_else(|| f.split('\\').last())
@@ -61,18 +61,18 @@ impl LogCollector {
             line: record.line(),
         };
 
-        // 添加到日志列表
+        // Add to the log list
         {
             let mut logs = self.logs.lock().unwrap();
             logs.push(entry.clone());
-            
-            // 限制日志数量
+
+            // Cap the log count
             if logs.len() > self.max_logs {
                 logs.remove(0);
             }
         }
 
-        // 发送事件到日志控制台窗口
+        // Emit event to the log console window
         if let Ok(app_guard) = self.app_handle.lock() {
             if let Some(app) = app_guard.as_ref() {
                 if let Some(window) = app.get_webview_window("log_console") {
@@ -91,7 +91,7 @@ impl LogCollector {
     }
 }
 
-/// 自定义日志记录器
+/// Custom logger
 pub struct TauriLogger {
     collector: Arc<LogCollector>,
     inner: env_logger::Logger,
@@ -120,33 +120,33 @@ impl Log for TauriLogger {
     }
 
     fn log(&self, record: &Record) {
-        // 只收集日志，不调用 env_logger 的 log 方法（避免重复记录）
-        // env_logger 只用于判断是否启用日志级别
+        // Only collect — don't call env_logger's log() (avoids duplicates).
+        // env_logger is only used to decide whether the log level is enabled.
         self.collector.add_log(record);
     }
 
     fn flush(&self) {
-        // env_logger 的 flush 不需要调用
+        // env_logger's flush doesn't need to be called
     }
 }
 
 static LOG_COLLECTOR: once_cell::sync::OnceCell<Arc<LogCollector>> = once_cell::sync::OnceCell::new();
 
-/// 初始化日志系统
+/// Initialize the logging system
 pub fn init_logger(app: AppHandle) {
-    let collector = Arc::new(LogCollector::new(10000)); // 最多保存 10000 条日志
+    let collector = Arc::new(LogCollector::new(10000)); // Keep at most 10,000 log entries
     collector.set_app_handle(app);
-    
+
     LOG_COLLECTOR.set(collector.clone()).ok();
-    
+
     let logger = Box::new(TauriLogger::new(collector));
-    
+
     log::set_logger(Box::leak(logger))
         .map(|()| log::set_max_level(log::LevelFilter::Trace))
-        .expect("无法初始化日志系统");
+        .expect("Failed to initialize logging system");
 }
 
-/// 获取所有日志
+/// Get all logs
 #[tauri::command]
 pub fn get_all_logs() -> Vec<LogEntry> {
     if let Some(collector) = LOG_COLLECTOR.get() {
@@ -156,7 +156,7 @@ pub fn get_all_logs() -> Vec<LogEntry> {
     }
 }
 
-/// 清空日志
+/// Clear logs
 #[tauri::command]
 pub fn clear_logs() {
     if let Some(collector) = LOG_COLLECTOR.get() {
@@ -164,62 +164,62 @@ pub fn clear_logs() {
     }
 }
 
-/// 导出日志到文件
+/// Export logs to file
 #[tauri::command]
 pub async fn export_logs(
     app: AppHandle,
-    format: String, // "txt" 或 "json"
+    format: String, // "txt" or "json"
 ) -> Result<String, String> {
     use tauri_plugin_dialog::DialogExt;
     use tokio::sync::oneshot;
-    
+
     let logs = if let Some(collector) = LOG_COLLECTOR.get() {
         collector.get_logs()
     } else {
-        return Err("日志收集器未初始化".to_string());
+        return Err("Log collector is not initialized".to_string());
     };
-    
+
     if logs.is_empty() {
-        return Err("没有日志可导出".to_string());
+        return Err("No logs to export".to_string());
     }
-    
-    // 生成文件名
+
+    // Generate file name
     let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
     let default_filename = format!("sunshine_gui_logs_{}.{}", timestamp, format);
-    
-    // 使用 oneshot channel 来接收对话框结果
+
+    // Use a oneshot channel to receive the dialog result
     let (tx, rx) = oneshot::channel();
-    
-    // 打开保存文件对话框
+
+    // Open the save-file dialog
     app.dialog()
         .file()
         .set_file_name(&default_filename)
-        .add_filter("文本文件", &["txt"])
-        .add_filter("JSON文件", &["json"])
-        .add_filter("所有文件", &["*"])
+        .add_filter("Text file", &["txt"])
+        .add_filter("JSON file", &["json"])
+        .add_filter("All files", &["*"])
         .save_file(move |file_path_opt| {
             let _ = tx.send(file_path_opt);
         });
-    
-    // 等待用户选择文件
+
+    // Wait for the user to pick a file
     let file_path = rx.await
-        .map_err(|_| "无法接收对话框结果".to_string())?
-        .ok_or_else(|| "用户取消了保存".to_string())?;
-    
-    // 将 FilePath 转换为 PathBuf
+        .map_err(|_| "Failed to receive dialog result".to_string())?
+        .ok_or_else(|| "User cancelled the save".to_string())?;
+
+    // Convert FilePath into PathBuf
     let file_path: PathBuf = PathBuf::from(file_path.to_string());
-    
-    // 根据格式生成内容
+
+    // Build content according to format
     let content = match format.as_str() {
         "json" => {
             serde_json::to_string_pretty(&logs)
-                .map_err(|e| format!("序列化JSON失败: {}", e))?
+                .map_err(|e| format!("Failed to serialize JSON: {}", e))?
         }
         "txt" | _ => {
             let mut text = String::new();
-            text.push_str(&format!("Sunshine Control Panel 日志导出\n"));
-            text.push_str(&format!("导出时间: {}\n", Local::now().format("%Y-%m-%d %H:%M:%S")));
-            text.push_str(&format!("日志总数: {}\n", logs.len()));
+            text.push_str(&format!("Sunshine Control Panel log export\n"));
+            text.push_str(&format!("Export time: {}\n", Local::now().format("%Y-%m-%d %H:%M:%S")));
+            text.push_str(&format!("Total entries: {}\n", logs.len()));
             text.push_str(&format!("{}\n\n", "=".repeat(80)));
             
             for log in &logs {
@@ -243,15 +243,15 @@ pub async fn export_logs(
         }
     };
     
-    // 写入文件
+    // Write to file
     fs::write(&file_path, content)
-        .map_err(|e| format!("写入文件失败: {}", e))?;
-    
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
     let file_name = file_path.file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or("未知文件")
+        .unwrap_or("unknown file")
         .to_string();
-    
-    Ok(format!("日志已导出到: {}", file_name))
+
+    Ok(format!("Logs exported to: {}", file_name))
 }
 

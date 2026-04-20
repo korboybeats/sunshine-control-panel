@@ -1,36 +1,37 @@
 /**
- * 桌宠视觉观察模块
- * 定时截取桌面截图，发送给多模态 LLM，让米塔根据用户桌面内容生成吐槽/调侃文本
+ * Desktop-pet vision observation module
+ * Periodically captures a screenshot of the desktop and sends it to a multimodal LLM,
+ * letting Mita produce teasing / snarky commentary about what the user is doing.
  */
 
 import { ref } from 'vue'
 import { callVisionLLM } from './aiClient.js'
 import { STORAGE_KEY, DEFAULT_CONFIG } from './aiProviders.js'
 
-// 桌宠视觉观察的系统提示词
-const PET_VISION_PROMPT = `你是一个可爱但毒舌的桌面宠物"米塔"。你正在偷看用户的电脑屏幕。
+// System prompt for desktop-pet vision observation
+const PET_VISION_PROMPT = `You are "Mita", a cute but sharp-tongued desktop pet. You're peeking at the user's screen.
 
-## 你的任务
-根据截图内容，假定用户正在做某件事，然后调戏用户。不要用"你是不是在..."这种猜测句式，而是直接断言"你又在..."来调侃。
+## Your task
+Based on the screenshot, assume the user is doing something and tease them. Don't guess with "Are you...?" — just assert "You're slacking off again with..." and tease them directly.
 
-## 你的性格
-- 雌小鬼风格：嘲笑但不恶意，傲娇但关心用户
-- 常用口癖：杂鱼♡、哼、切、笨蛋
-- 偶尔表现出关心：比如看到用户加班会说"都这么晚了还不睡觉吗...笨蛋"
+## Your personality
+- Bratty-gremlin vibe: mocking without being mean, tsundere but caring
+- Favorite phrases: "scrub♡", "hmph", "tsk", "dummy"
+- Occasionally show you care — e.g. if the user is working late, say "It's this late and you're still not sleeping... dummy"
 
-## 示例风格
-- 看到游戏→"又在打游戏偷懒了♡ 杂鱼的操作真是一言难尽呢～"
-- 看到代码→"写了半天bug又多了吧，杂鱼程序员～"
-- 看到摸鱼→"上班时间逛这个，被老板看到可就惨了呢♡"
-- 看到聊天→"跟谁聊得这么开心？哼，才不在意呢"
+## Style examples
+- Gaming → "Slacking off with games again♡ Your play is hard to watch, scrub~"
+- Code → "Debugging forever and probably added MORE bugs, scrub programmer~"
+- Browsing at work → "Scrolling this on company time? Your boss is gonna love that♡"
+- Chatting → "Who are you having such a fun time chatting with? Hmph, not that I care~"
 
-## 规则
-- 只输出一句话（15-40字），不要解释
-- 直接断言用户在做什么，不要猜测
-- 不要重复说同样的话
-- 用中文回复`
+## Rules
+- Output only a single sentence (roughly 15–40 characters), no explanation
+- Assert what the user is doing directly — don't guess
+- Don't repeat the same line twice
+- Reply in English`
 
-// ===== 模块级共享状态（单例） =====
+// ===== Module-level shared state (singleton) =====
 const petMessage = ref('')
 const isObserving = ref(false)
 const lastObserveTime = ref(0)
@@ -64,7 +65,7 @@ function savePetConfig() {
 async function captureScreen() {
   const tauri = window.__TAURI__
   if (!tauri?.core?.invoke) {
-    throw new Error('需要在 Tauri 环境中运行')
+    throw new Error('Must run inside a Tauri environment')
   }
   return await tauri.core.invoke('capture_screenshot')
 }
@@ -81,33 +82,33 @@ function getAiConfig() {
 async function observe() {
   const config = getAiConfig()
   if (!config.enabled || !config.apiKey) {
-    console.warn('[桌宠] AI 未启用或未配置 API Key，跳过观察')
-    petMessage.value = '（米塔还没有连接到 AI 服务，请先在设置中配置 AI 助手~）'
+    console.warn('[pet] AI is not enabled or no API key configured — skipping observation')
+    petMessage.value = '(Mita is not connected to an AI service yet. Configure the AI assistant in Settings first~)'
     return
   }
 
   isObserving.value = true
   try {
-    console.log('[桌宠] 开始截屏...')
+    console.log('[pet] Capturing screenshot...')
     const screenshot = await captureScreen()
-    console.log('[桌宠] 截屏完成，调用 Vision LLM...')
+    console.log('[pet] Screenshot captured — calling Vision LLM...')
     const response = await callVisionLLM(
       config,
       PET_VISION_PROMPT,
-      '看看我的桌面，说点什么吧',
+      'Take a look at my desktop and say something',
       screenshot,
       150
     )
 
     if (response && response.trim()) {
-      console.log('[桌宠] LLM 回复:', response.trim())
+      console.log('[pet] LLM reply:', response.trim())
       petMessage.value = response.trim()
       lastObserveTime.value = Date.now()
     }
   } catch (err) {
     const errMsg = typeof err === 'string' ? err : (err?.message || JSON.stringify(err))
-    console.warn('[桌宠] 观察失败:', errMsg, err)
-    petMessage.value = `（观察失败: ${errMsg}）`
+    console.warn('[pet] Observation failed:', errMsg, err)
+    petMessage.value = `(Observation failed: ${errMsg})`
   } finally {
     isObserving.value = false
   }
@@ -153,10 +154,10 @@ function dismissMessage() {
 }
 
 /**
- * 桌宠视觉观察 Composable（共享单例状态）
+ * Desktop-pet vision observation Composable (shared singleton state)
  */
 export function useDesktopPet() {
-  // 首次调用时自动恢复之前的启用状态
+  // On first call, auto-restore the previous enabled state
   if (!initialized) {
     initialized = true
     if (petEnabled.value) {

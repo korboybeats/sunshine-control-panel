@@ -40,7 +40,7 @@
         </div>
       </template>
 
-      <!-- 消息提示 -->
+      <!-- Message toast -->
       <div v-if="message" :class="['message', messageType]">
         {{ message }}
       </div>
@@ -85,7 +85,7 @@ async function loadStatus() {
   try {
     status.value = await invoke('get_rtss_status')
   } catch (e) {
-    console.error('获取 RTSS 状态失败:', e)
+    console.error('Failed to fetch RTSS status:', e)
     status.value.running = false
   } finally {
     statusLoading.value = false

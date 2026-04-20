@@ -1,9 +1,8 @@
 /**
- * 桌面 UI 组件库
  * Desktop UI Component Library
  */
 
-// 基础组件
+// Base components
 export { default as DesktopWindow } from './DesktopWindow.vue'
 export { default as TitleBar } from './TitleBar.vue'
 export { default as WindowControls } from './WindowControls.vue'

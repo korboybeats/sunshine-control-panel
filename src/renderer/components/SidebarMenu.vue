@@ -1,13 +1,13 @@
 <template>
   <div class="sidebar-wrapper">
-    <!-- 侧边栏 -->
+    <!-- Sidebar -->
     <aside class="sidebar" :class="{ collapsed: isCollapsed }">
-      <!-- Gura 背景装饰 -->
+      <!-- Gura background decoration -->
       <div class="gura-background">
         <img src="../public/gura-pix.png" alt="Gura" class="gura-bg-img" />
       </div>
 
-      <!-- Logo 区域 (可拖动) -->
+      <!-- Logo area (draggable) -->
       <div class="sidebar-header" data-tauri-drag-region>
         <div class="logo">
           <img src="../public/gura-pix.png" alt="Sunshine Logo" class="logo-img" />
@@ -17,19 +17,19 @@
         </transition>
       </div>
 
-      <!-- 折叠按钮 -->
+      <!-- Collapse button -->
       <div class="collapse-btn" @click="toggleCollapse" :aria-label="t.sidebar.collapse">
         <img
           :class="['clip-icon', { collapsed: isCollapsed }]"
           src="../public/gura-clip.svg"
-          alt="折叠发卡"
+          alt="Collapse hair-clip"
           width="24"
           height="24"
           aria-hidden="true"
         />
       </div>
 
-      <!-- 菜单列表 -->
+      <!-- Menu list -->
       <el-scrollbar class="menu-scrollbar">
         <div class="menu-section">
           <p v-if="!isCollapsed" class="section-title">{{ t.sidebar.sectionManage }}</p>
@@ -60,7 +60,7 @@
           </div>
         </div>
 
-        <!-- 工具菜单 -->
+        <!-- Tools menu -->
         <div class="menu-section">
           <p v-if="!isCollapsed" class="section-title">{{ t.sidebar.sectionTools }}</p>
           <div v-for="item in toolsMenuItems" :key="item.label" class="menu-item" @click="item.action">
@@ -72,7 +72,7 @@
         </div>
       </el-scrollbar>
 
-      <!-- 底部操作 -->
+      <!-- Footer actions -->
       <div class="sidebar-footer">
         <div
           v-for="item in footerMenuItems"
@@ -89,12 +89,12 @@
       </div>
     </aside>
 
-    <!-- 主内容区域 -->
+    <!-- Main content area -->
     <div class="main-content" :class="{ expanded: isCollapsed }">
-      <!-- 顶部拖动区域 -->
+      <!-- Top drag region -->
       <div class="drag-region" data-tauri-drag-region></div>
 
-      <!-- Windows 经典窗口控制按钮 -->
+      <!-- Classic Windows window-control buttons -->
       <div class="window-controls">
         <el-tooltip :content="t.sidebar.minimize" placement="bottom">
           <div class="control-btn minimize" @click="minimizeWindow">
@@ -130,18 +130,18 @@
         </el-tooltip>
       </div>
 
-      <!-- 页面内容 -->
+      <!-- Page content -->
       <div class="page-content">
-        <!-- 动态路由组件 -->
+        <!-- Dynamic route components -->
         <VddSettings v-if="router.isRoute(ROUTES.VDD_SETTINGS)" @close="goHome" />
         <Welcome v-if="router.isRoute(ROUTES.WELCOME)" @close="goHome" />
         <WebStreamSettings v-if="router.isRoute(ROUTES.WEB_STREAM)" @close="goHome" />
         <AiAssistant v-if="router.isRoute(ROUTES.AI_ASSISTANT)" @close="goHome" />
 
-        <!-- 默认内容 (slot) -->
+        <!-- Default content (slot) -->
         <slot v-if="router.isRoute(ROUTES.HOME)" />
 
-        <!-- 更新对话框 -->
+        <!-- Update dialog -->
         <UpdateDialog
           v-if="showUpdateDialog"
           v-model="showUpdateDialog"
@@ -239,7 +239,7 @@ const handleCheckForUpdates = async () => {
 
 const handleSkipVersion = (version) => skipVersion(version)
 
-// 菜单配置
+// Menu configuration
 const managementMenuItems = computed(() => [
   { icon: Setting, label: t.value.sidebar.advancedSettings, action: goHome, isActive: () => router.isRoute(ROUTES.HOME) },
   { icon: Monitor, label: t.value.sidebar.virtualDisplay, action: openVddSettings, isActive: () => router.isRoute(ROUTES.VDD_SETTINGS) },
@@ -247,7 +247,7 @@ const managementMenuItems = computed(() => [
   { icon: MagicStick, label: t.value.sidebar.aiAssistant, action: openAiAssistant, isActive: () => router.isRoute(ROUTES.AI_ASSISTANT) },
   // { icon: Delete, label: t.value.sidebar.uninstallVdd, action: uninstallVdd },
   // { icon: RefreshRight, label: t.value.sidebar.restartGpu, action: restartDriver },
-  // { icon: Refresh, label: '使用WGC捕获', action: restartSunshineInUserMode },
+  // { icon: Refresh, label: 'Use WGC capture', action: restartSunshineInUserMode },
   { icon: Download, label: t.value.sidebar.checkUpdate, action: handleCheckForUpdates, hasSwitch: true },
 ])
 
@@ -273,14 +273,14 @@ const footerMenuItems = computed(() => {
   return items
 })
 
-// 路由变化时通知父组件（用于 iframe 休眠/唤醒）
+// Notify parent when route changes (used for iframe sleep / wake)
 watch(() => router.currentRoute.value, (newRoute, oldRoute) => {
   if (newRoute !== oldRoute) {
     emit('route-change', { from: oldRoute, to: newRoute })
   }
 })
 
-// 暴露方法供父组件调用
+// Expose methods for parent to call
 defineExpose({
   openVddSettings,
   openWelcome,

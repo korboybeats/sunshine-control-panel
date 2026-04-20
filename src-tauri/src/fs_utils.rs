@@ -8,7 +8,7 @@ use std::ffi::OsStr;
 #[cfg(target_os = "windows")]
 use std::os::windows::ffi::OsStrExt;
 
-/// 扫描到的应用信息
+/// Scanned application info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScannedApp {
     pub name: String,
@@ -22,7 +22,7 @@ pub struct ScannedApp {
     pub is_game: Option<bool>,
 }
 
-/// 平台游戏库扫描结果
+/// Platform game library scan result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlatformGame {
     pub name: String,
@@ -39,7 +39,7 @@ pub struct PlatformGame {
     pub size_on_disk: Option<u64>,
 }
 
-/// 快捷方式解析结果
+/// Shortcut resolution result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LnkInfo {
     pub name: String,
@@ -50,8 +50,8 @@ pub struct LnkInfo {
     pub arguments: String,
 }
 
-/// 通用文本文件保存（弹出系统保存对话框）
-/// 供远程 WebUI 页面通过 __TAURI_INTERNALS__.invoke 调用
+/// Generic text file save (shows the system save dialog).
+/// Callable by the remote WebUI page via __TAURI_INTERNALS__.invoke.
 #[tauri::command]
 pub async fn save_text_file(
     app: tauri::AppHandle,
@@ -85,7 +85,7 @@ pub async fn save_text_file(
     Ok(path_buf.display().to_string())
 }
 
-/// 获取 ICC 颜色配置文件列表
+/// Get the list of ICC color profile files
 #[tauri::command]
 pub async fn get_icc_file_list() -> Result<Vec<String>, String> {
     #[cfg(target_os = "windows")]
@@ -93,34 +93,34 @@ pub async fn get_icc_file_list() -> Result<Vec<String>, String> {
         let color_dir = std::env::var("windir")
             .map(|windir| PathBuf::from(windir).join("System32\\spool\\drivers\\color"))
             .unwrap_or_else(|_| PathBuf::from("C:\\Windows\\System32\\spool\\drivers\\color"));
-        
+
         match std::fs::read_dir(&color_dir) {
             Ok(entries) => {
                 let mut files = Vec::new();
                 for entry in entries {
                     if let Ok(entry) = entry {
                         if let Some(file_name) = entry.file_name().to_str() {
-                            // 只包含 .icc 和 .icm 文件
+                            // Only include .icc and .icm files
                             if file_name.ends_with(".icc") || file_name.ends_with(".icm") {
                                 files.push(file_name.to_string());
                             }
                         }
                     }
                 }
-                files.sort();  // 按字母顺序排序
+                files.sort();  // Sort alphabetically
                 Ok(files)
             }
-            Err(e) => Err(format!("读取目录失败: {}", e)),
+            Err(e) => Err(format!("Failed to read directory: {}", e)),
         }
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
-        Ok(vec![])  // 非 Windows 系统返回空列表
+        Ok(vec![])  // Return empty list on non-Windows systems
     }
 }
 
-/// 读取指定目录的文件列表
+/// Read the file list of the given directory
 #[tauri::command]
 pub async fn read_directory(path: String) -> Result<Vec<String>, String> {
     match std::fs::read_dir(&path) {
@@ -136,75 +136,75 @@ pub async fn read_directory(path: String) -> Result<Vec<String>, String> {
             files.sort();
             Ok(files)
         }
-        Err(e) => Err(format!("读取目录失败: {}", e)),
+        Err(e) => Err(format!("Failed to read directory: {}", e)),
     }
 }
 
-/// 读取图片文件并返回 Base64 编码的 Data URL
+/// Read an image file and return it as a Base64-encoded Data URL
 #[tauri::command]
 pub async fn read_image_as_data_url(path: String) -> Result<String, String> {
     use std::fs;
     use std::path::Path;
-    
-    // 读取文件
+
+    // Read the file
     let file_bytes = fs::read(&path)
-        .map_err(|e| format!("读取文件失败: {}", e))?;
-    
-    debug!("📖 读取文件成功: {}, 大小: {} bytes", path, file_bytes.len());
-    
-    // 根据扩展名确定 MIME 类型
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    debug!("📖 File read successfully: {}, size: {} bytes", path, file_bytes.len());
+
+    // Determine MIME type from extension
     let path_obj = Path::new(&path);
     let extension = path_obj.extension()
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_lowercase();
-    
+
     let mime_type = match extension.as_str() {
         "png" => "image/png",
         "jpg" | "jpeg" => "image/jpeg",
         "gif" => "image/gif",
         "webp" => "image/webp",
-        _ => "image/png", // 默认
+        _ => "image/png", // default
     };
-    
-    // 转换为 Base64
+
+    // Convert to Base64
     use base64::{Engine as _, engine::general_purpose};
     let base64 = general_purpose::STANDARD.encode(&file_bytes);
-    
-    // 构造 Data URL
+
+    // Build the Data URL
     let data_url = format!("data:{};base64,{}", mime_type, base64);
-    
-    debug!("✅ Data URL 生成成功, MIME: {}, Base64 长度: {}", mime_type, base64.len());
-    
+
+    debug!("✅ Data URL generated, MIME: {}, Base64 length: {}", mime_type, base64.len());
+
     Ok(data_url)
 }
 
-/// 复制图片文件到 Sunshine assets 目录
-/// 返回相对于 Sunshine Web 服务器的 URL 路径（/boxart/xxx.jpg）
+/// Copy an image file to the Sunshine assets directory.
+/// Returns the URL path relative to the Sunshine web server (/boxart/xxx.jpg).
 #[tauri::command]
 pub async fn copy_image_to_assets(source_path: String) -> Result<String, String> {
     use std::fs;
     use std::path::Path;
-    
+
     let source = Path::new(&source_path);
-    
-    // 验证源文件存在
+
+    // Verify the source file exists
     if !source.exists() {
-        return Err(format!("源文件不存在: {}", source_path));
+        return Err(format!("Source file does not exist: {}", source_path));
     }
-    
+
     let assets_dir = sunshine::assets_dir();
-    
-    // 创建 assets 目录（如果不存在）
+
+    // Create the assets directory if it does not exist
     fs::create_dir_all(&assets_dir)
-        .map_err(|e| format!("创建目录失败: {}", e))?;
-    
-    // 获取文件名
+        .map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    // Get the file name
     let file_name = source.file_name()
         .and_then(|n| n.to_str())
-        .ok_or_else(|| "无效的文件名".to_string())?;
-    
-    // 生成唯一文件名（避免覆盖）
+        .ok_or_else(|| "Invalid file name".to_string())?;
+
+    // Generate a unique file name (to avoid overwriting)
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -213,75 +213,75 @@ pub async fn copy_image_to_assets(source_path: String) -> Result<String, String>
         .and_then(|e| e.to_str())
         .unwrap_or("jpg");
     let unique_name = format!("bg_{}_{}.{}", timestamp, file_name.replace(|c: char| !c.is_alphanumeric(), "_"), extension);
-    
-    // 目标路径
+
+    // Destination path
     let dest_path = assets_dir.join(&unique_name);
-    
-    // 复制文件
+
+    // Copy the file
     fs::copy(source, &dest_path)
-        .map_err(|e| format!("复制文件失败: {}", e))?;
-    
-    info!("✅ 图片已复制到: {:?}", dest_path);
-    
-    // 返回相对于 Sunshine Web 根目录的 URL 路径
+        .map_err(|e| format!("Failed to copy file: {}", e))?;
+
+    info!("✅ Image copied to: {:?}", dest_path);
+
+    // Return the URL path relative to the Sunshine web root
     let web_url = format!("/boxart/{}", unique_name);
-    
+
     Ok(web_url)
 }
 
-/// 清理 covers 目录中未被使用的封面图片
+/// Clean up unused cover images in the covers directory
 #[tauri::command]
 pub async fn cleanup_unused_covers() -> Result<serde_json::Value, String> {
     use std::fs;
     use std::collections::HashSet;
     use serde_json::json;
-    
-    info!("🧹 开始清理无用封面...");
-    
+
+    info!("🧹 Starting cleanup of unused covers...");
+
     let covers_dir = sunshine::covers_dir();
     let apps_json_path = sunshine::config_dir().join("apps.json");
-    
-    debug!("📂 使用 covers 目录: {:?}", covers_dir);
-    debug!("📄 使用 apps.json 路径: {:?}", apps_json_path);
-    
-    // 读取 apps.json 获取所有正在使用的图片
+
+    debug!("📂 Using covers dir: {:?}", covers_dir);
+    debug!("📄 Using apps.json path: {:?}", apps_json_path);
+
+    // Read apps.json to collect all images currently in use
     let used_images: HashSet<String> = if apps_json_path.exists() {
         match fs::read_to_string(&apps_json_path) {
             Ok(content) => {
-                // 检查文件内容是否为空或只包含空白字符
+                // Check whether the file content is empty or whitespace-only
                 let trimmed_content = content.trim();
                 if trimmed_content.is_empty() {
-                    warn!("⚠️  apps.json 文件为空，跳过解析");
+                    warn!("⚠️  apps.json is empty; skipping parse");
                     HashSet::new()
                 } else {
-                    // 尝试解析 JSON
+                    // Try to parse JSON
                     match serde_json::from_str::<serde_json::Value>(trimmed_content) {
                         Ok(apps) => {
                             let mut images = HashSet::new();
-                            
+
                             if let Some(apps_array) = apps.get("apps").and_then(|a| a.as_array()) {
                                 for app in apps_array {
                                     if let Some(image_path) = app.get("image-path").and_then(|p| p.as_str()) {
-                                        // 跳过无效或默认图片
+                                        // Skip invalid or default images
                                         if image_path.is_empty() || image_path == "desktop" {
                                             continue;
                                         }
-                                        
-                                        // 提取文件名（去除路径）
+
+                                        // Extract file name (strip path)
                                         let filename = image_path.split('/').last()
                                             .or_else(|| image_path.split('\\').last())
                                             .unwrap_or(image_path);
-                                        
+
                                         if !filename.is_empty() && filename != "desktop" {
-                                            // 始终保存文件名
+                                            // Always save the file name
                                             images.insert(filename.to_string());
-                                            
-                                            // 如果路径包含分隔符，也保存完整路径
+
+                                            // If the path contains a separator, also store the full path
                                             if image_path.contains('/') || image_path.contains('\\') {
                                                 images.insert(image_path.to_string());
-                                                debug!("  📌 使用中: {} (完整路径: {})", filename, image_path);
+                                                debug!("  📌 In use: {} (full path: {})", filename, image_path);
                                             } else {
-                                                debug!("  📌 使用中: {}", filename);
+                                                debug!("  📌 In use: {}", filename);
                                             }
                                         }
                                     }
@@ -290,106 +290,106 @@ pub async fn cleanup_unused_covers() -> Result<serde_json::Value, String> {
                             images
                         }
                         Err(e) => {
-                            warn!("⚠️  解析 apps.json 失败: {}，跳过解析", e);
+                            warn!("⚠️  Failed to parse apps.json: {}; skipping parse", e);
                             HashSet::new()
                         }
                     }
                 }
             }
             Err(e) => {
-                warn!("⚠️  读取 apps.json 失败: {}，跳过解析", e);
+                warn!("⚠️  Failed to read apps.json: {}; skipping parse", e);
                 HashSet::new()
             }
         }
     } else {
-        debug!("📄 apps.json 不存在，跳过解析");
+        debug!("📄 apps.json does not exist; skipping parse");
         HashSet::new()
     };
-    
-    debug!("  正在使用的封面数: {}", used_images.len());
-    
+
+    debug!("  covers in use: {}", used_images.len());
+
     let mut deleted_count = 0;
     let mut freed_space: u64 = 0;
     let mut errors = Vec::new();
-    
-    // === 1. 清理 covers 目录中未使用的封面 ===
+
+    // === 1. Clean up unused covers in the covers directory ===
     if covers_dir.exists() {
-        debug!("\n📂 扫描 covers 目录...");
+        debug!("\n📂 Scanning covers directory...");
         let entries = fs::read_dir(&covers_dir)
-            .map_err(|e| format!("读取 covers 目录失败: {}", e))?;
-        
+            .map_err(|e| format!("Failed to read covers directory: {}", e))?;
+
         for entry in entries {
             if let Ok(entry) = entry {
                 let path = entry.path();
-                
+
                 if path.is_file() {
                     if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
-                        // 更安全的检查：检查文件名是否在任何路径中被使用
+                        // Safer check: see if the file name is referenced by any used path
                         let is_used = {
-                            // 直接检查文件名
+                            // Direct file name check
                             used_images.contains(filename) ||
-                            // 检查是否有路径以这个文件名结尾
+                            // Check for any path that ends with this file name
                             used_images.iter().any(|used_path| {
                                 used_path.ends_with(&format!("/{}", filename)) ||
                                 used_path.ends_with(&format!("\\{}", filename)) ||
                                 used_path == filename
                             })
                         };
-                        
+
                         if !is_used {
-                            // 获取文件大小
+                            // Get file size
                             let size = fs::metadata(&path)
                                 .map(|m| m.len())
                                 .unwrap_or(0);
-                            
-                            // 删除文件
+
+                            // Delete the file
                             match fs::remove_file(&path) {
                                 Ok(_) => {
-                                    debug!("  🗑️  [封面] {}", filename);
+                                    debug!("  🗑️  [cover] {}", filename);
                                     deleted_count += 1;
                                     freed_space += size;
                                 }
                                 Err(e) => {
-                                    let error_msg = format!("删除封面 {} 失败: {}", filename, e);
+                                    let error_msg = format!("Failed to delete cover {}: {}", filename, e);
                                     error!("  ❌ {}", error_msg);
                                     errors.push(error_msg);
                                 }
                             }
                         } else {
-                            debug!("  ✅ [保护] {} (正在使用中)", filename);
+                            debug!("  ✅ [kept] {} (in use)", filename);
                         }
                     }
                 }
             }
         }
     }
-    
-    // === 2. 清理 config 目录中的 temp_ 临时文件 ===
+
+    // === 2. Clean up temp_ temporary files in the config directory ===
     let config_dir = sunshine::config_dir();
-    debug!("\n📂 扫描 config 目录中的临时文件...");
+    debug!("\n📂 Scanning config directory for temporary files...");
     if config_dir.exists() {
         match fs::read_dir(&config_dir) {
             Ok(entries) => {
                 for entry in entries {
                     if let Ok(entry) = entry {
                         let path = entry.path();
-                        
+
                         if path.is_file() {
                             if let Some(filename) = path.file_name().and_then(|n| n.to_str()) {
-                                // 删除 temp_ 开头的临时文件
+                                // Remove temporary files starting with temp_
                                 if filename.starts_with("temp_") {
                                     let size = fs::metadata(&path)
                                         .map(|m| m.len())
                                         .unwrap_or(0);
-                                    
+
                                     match fs::remove_file(&path) {
                                         Ok(_) => {
-                                            debug!("  🗑️  [临时] {}", filename);
+                                            debug!("  🗑️  [temp] {}", filename);
                                             deleted_count += 1;
                                             freed_space += size;
                                         }
                                         Err(e) => {
-                                            let error_msg = format!("删除临时文件 {} 失败: {}", filename, e);
+                                            let error_msg = format!("Failed to delete temp file {}: {}", filename, e);
                                             error!("  ❌ {}", error_msg);
                                             errors.push(error_msg);
                                         }
@@ -401,20 +401,20 @@ pub async fn cleanup_unused_covers() -> Result<serde_json::Value, String> {
                 }
             }
             Err(e) => {
-                let error_msg = format!("读取 config 目录失败: {}", e);
+                let error_msg = format!("Failed to read config directory: {}", e);
                 warn!("  ⚠️  {}", error_msg);
-                // 不返回错误，继续执行
+                // Do not return an error; continue execution
             }
         }
     }
-    
+
     let message = if deleted_count > 0 {
-        format!("成功删除 {} 个无用文件，释放 {:.2} KB", deleted_count, freed_space as f64 / 1024.0)
+        format!("Deleted {} unused file(s), freed {:.2} KB", deleted_count, freed_space as f64 / 1024.0)
     } else {
-        "没有发现需要清理的文件".to_string()
+        "No files found that needed cleaning up".to_string()
     };
-    
-    info!("\n✅ 清理完成: {}", message);
+
+    info!("\n✅ Cleanup complete: {}", message);
     
     Ok(json!({
         "success": true,
@@ -425,17 +425,17 @@ pub async fn cleanup_unused_covers() -> Result<serde_json::Value, String> {
     }))
 }
 
-/// 解析 Windows 快捷方式 (.lnk) 文件
+/// Resolve a Windows shortcut (.lnk) file
 #[tauri::command]
 pub async fn resolve_lnk_target(lnk_path: String) -> Result<LnkInfo, String> {
     #[cfg(target_os = "windows")]
     {
         resolve_lnk_windows(&lnk_path)
     }
-    
+
     #[cfg(not(target_os = "windows"))]
     {
-        Err("快捷方式解析仅支持 Windows 系统".to_string())
+        Err("Shortcut resolution is only supported on Windows".to_string())
     }
 }
 
@@ -449,86 +449,86 @@ fn resolve_lnk_windows(lnk_path: &str) -> Result<LnkInfo, String> {
     use windows::core::Interface;
     use std::path::Path;
     
-    info!("🔗 解析快捷方式: {}", lnk_path);
-    
-    // 初始化 COM
+    info!("🔗 Resolving shortcut: {}", lnk_path);
+
+    // Initialize COM
     unsafe {
         let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
     }
-    
+
     let result = (|| -> Result<LnkInfo, String> {
-        // 创建 ShellLink 对象
+        // Create a ShellLink object
         let shell_link: IShellLinkW = unsafe {
             CoCreateInstance(&ShellLink, None, CLSCTX_INPROC_SERVER)
-                .map_err(|e| format!("创建 ShellLink 失败: {:?}", e))?
+                .map_err(|e| format!("Failed to create ShellLink: {:?}", e))?
         };
-        
-        // 获取 IPersistFile 接口
+
+        // Query the IPersistFile interface
         let persist_file: IPersistFile = shell_link.cast()
-            .map_err(|e| format!("获取 IPersistFile 失败: {:?}", e))?;
-        
-        // 加载 .lnk 文件
+            .map_err(|e| format!("Failed to query IPersistFile: {:?}", e))?;
+
+        // Load the .lnk file
         let wide_path: Vec<u16> = OsStr::new(lnk_path)
             .encode_wide()
             .chain(std::iter::once(0))
             .collect();
-        
+
         unsafe {
             persist_file.Load(
                 windows::core::PCWSTR(wide_path.as_ptr()),
                 STGM_READ,
-            ).map_err(|e| format!("加载 .lnk 文件失败: {:?}", e))?;
+            ).map_err(|e| format!("Failed to load .lnk file: {:?}", e))?;
         }
-        
-        // 获取目标路径
+
+        // Fetch the target path
         let mut target_path_buf: [u16; 260] = [0; 260];
         let mut find_data: windows::Win32::Storage::FileSystem::WIN32_FIND_DATAW = unsafe { std::mem::zeroed() };
-        
+
         unsafe {
             shell_link.GetPath(
                 &mut target_path_buf,
                 &mut find_data,
                 windows::Win32::UI::Shell::SLGP_RAWPATH.0 as u32,
-            ).map_err(|e| format!("获取目标路径失败: {:?}", e))?;
+            ).map_err(|e| format!("Failed to get target path: {:?}", e))?;
         }
-        
+
         let target_path = String::from_utf16_lossy(
             &target_path_buf[..target_path_buf.iter().position(|&c| c == 0).unwrap_or(target_path_buf.len())]
         );
-        
-        // 获取工作目录
+
+        // Fetch the working directory
         let mut working_dir_buf: [u16; 260] = [0; 260];
         unsafe {
             let _ = shell_link.GetWorkingDirectory(&mut working_dir_buf);
         }
-        
+
         let working_dir = String::from_utf16_lossy(
             &working_dir_buf[..working_dir_buf.iter().position(|&c| c == 0).unwrap_or(working_dir_buf.len())]
         );
-        
-        // 获取参数
+
+        // Fetch the arguments
         let mut arguments_buf: [u16; 1024] = [0; 1024];
         unsafe {
             let _ = shell_link.GetArguments(&mut arguments_buf);
         }
-        
+
         let arguments = String::from_utf16_lossy(
             &arguments_buf[..arguments_buf.iter().position(|&c| c == 0).unwrap_or(arguments_buf.len())]
         );
-        
-        // 从 lnk 文件名获取名称
+
+        // Derive the name from the .lnk file name
         let lnk_file_path = Path::new(lnk_path);
         let name = lnk_file_path.file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("Unknown")
             .to_string();
-        
-        debug!("✅ 快捷方式解析成功:");
-        debug!("   名称: {}", name);
-        debug!("   目标: {}", target_path);
-        debug!("   工作目录: {}", working_dir);
-        debug!("   参数: {}", arguments);
-        
+
+        debug!("✅ Shortcut resolved:");
+        debug!("   name: {}", name);
+        debug!("   target: {}", target_path);
+        debug!("   working dir: {}", working_dir);
+        debug!("   arguments: {}", arguments);
+
         Ok(LnkInfo {
             name,
             target_path,
@@ -536,68 +536,68 @@ fn resolve_lnk_windows(lnk_path: &str) -> Result<LnkInfo, String> {
             arguments,
         })
     })();
-    
-    // 清理 COM
+
+    // Uninitialize COM
     unsafe {
         CoUninitialize();
     }
-    
+
     result
 }
 
-/// 扫描目录中的可执行文件和快捷方式
-/// 返回找到的应用列表
+/// Scan a directory for executables and shortcuts.
+/// Returns the list of apps found.
 #[tauri::command]
 pub async fn scan_directory_for_apps(directory: String) -> Result<Vec<ScannedApp>, String> {
     use std::path::Path;
-    
-    info!("📂 开始扫描目录: {}", directory);
-    
+
+    info!("📂 Starting directory scan: {}", directory);
+
     let dir_path = Path::new(&directory);
     if !dir_path.exists() {
-        return Err(format!("目录不存在: {}", directory));
+        return Err(format!("Directory does not exist: {}", directory));
     }
-    
+
     if !dir_path.is_dir() {
-        return Err(format!("路径不是目录: {}", directory));
+        return Err(format!("Path is not a directory: {}", directory));
     }
-    
+
     let mut apps: Vec<ScannedApp> = Vec::new();
-    
-    // 支持的文件扩展名
+
+    // Supported file extensions
     let supported_extensions = [".lnk", ".exe", ".bat", ".cmd", ".url"];
-    
-    // 递归扫描目录
+
+    // Recursively scan the directory
     scan_directory_recursive(dir_path, &supported_extensions, &mut apps)?;
-    
-    info!("✅ 扫描完成，找到 {} 个应用", apps.len());
+
+    info!("✅ Scan complete, found {} app(s)", apps.len());
     Ok(apps)
 }
 
-/// 检测应用是否是游戏
-/// 基于路径、文件名和常见游戏平台目录
-fn detect_if_game(file_path: &str, name: &str, target_path: Option<&str>) -> bool {    
+/// Detect whether an app is a game.
+/// Based on path, file name, and common game-platform directories.
+fn detect_if_game(file_path: &str, name: &str, target_path: Option<&str>) -> bool {
     let path_lower = file_path.to_lowercase();
     let name_lower = name.to_lowercase();
     let target_lower = target_path.map(|s| s.to_lowercase()).unwrap_or_default();
-    
-    // 不是 .exe 文件肯定不是游戏
-    // 检查文件路径或目标路径是否以 .exe 结尾
-    let is_exe = path_lower.ends_with(".exe") || 
+
+    // Non-.exe files are definitely not games.
+    // Check whether the file path or target path ends with .exe.
+    let is_exe = path_lower.ends_with(".exe") ||
                  target_lower.ends_with(".exe") ||
-                 // 对于 .lnk 快捷方式，检查其目标是否是 .exe
+                 // For .lnk shortcuts, check whether the target is a .exe
                  (path_lower.ends_with(".lnk") && target_lower.ends_with(".exe"));
-    
+
     if !is_exe && !path_lower.ends_with(".lnk") {
         return false;
     }
-    
-    // 对于 .lnk 文件，如果目标不是 .exe，也不是游戏
+
+    // For .lnk files, if the target is not a .exe, it's not a game either.
     if path_lower.ends_with(".lnk") && !target_lower.is_empty() && !target_lower.ends_with(".exe") {
         return false;
     }
-    
-    // 首先排除明显不是游戏的应用
+
+    // First exclude apps that are clearly not games
     let exclude_keywords = [
         "uninstall", "卸载", "setup", "安装", "installer",
         "update", "更新", "updater", "patch",
@@ -607,7 +607,7 @@ fn detect_if_game(file_path: &str, name: &str, target_path: Option<&str>) -> boo
         "redist", "redistributable", "vcredist", "directx",
         "launcher_helper", "bootstrapper",
         "ue4prereqsetup", "dxsetup", "dotnet",
-        // 常见非游戏应用
+        // Common non-game apps
         "chrome", "firefox", "edge", "opera", "brave",
         "word", "excel", "powerpoint", "outlook", "onenote", "access",
         "visual studio", "vscode", "code", "notepad", "sublime",
@@ -625,14 +625,14 @@ fn detect_if_game(file_path: &str, name: &str, target_path: Option<&str>) -> boo
         "calculator", "计算器", "paint", "画图",
         "snipping", "截图",
     ];
-    
+
     for keyword in &exclude_keywords {
         if name_lower.contains(keyword) || path_lower.ends_with(&format!("\\{}.exe", keyword)) {
             return false;
         }
     }
-    
-    // 游戏平台相关路径关键词（高置信度）
+
+    // Game-platform path keywords (high confidence)
     let high_confidence_paths = [
         "\\steamapps\\common\\",
         "\\steam\\steamapps\\common\\",

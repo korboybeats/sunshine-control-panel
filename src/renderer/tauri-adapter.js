@@ -1,6 +1,6 @@
 /**
- * Tauri API 适配层
- * 将 Electron IPC 调用迁移到 Tauri invoke 调用
+ * Tauri API adapter layer
+ * Migrates Electron IPC calls over to Tauri invoke calls
  */
 
 import { invoke } from '@tauri-apps/api/core'
@@ -8,7 +8,7 @@ import { open } from '@tauri-apps/plugin-shell'
 
 // ─── Helpers ────────────────────────────────────────────
 
-/** 调用 command，返回 { success, data, message } */
+/** Invoke a command, returning { success, data, message } */
 async function wrapResult(cmd, args) {
   try {
     const data = await invoke(cmd, args)
@@ -18,7 +18,7 @@ async function wrapResult(cmd, args) {
   }
 }
 
-/** 调用 command，失败时返回 fallback */
+/** Invoke a command, returning `fallback` on failure */
 async function wrapDefault(cmd, fallback, args) {
   try {
     return await invoke(cmd, args)
@@ -28,26 +28,26 @@ async function wrapDefault(cmd, fallback, args) {
   }
 }
 
-// ─── 主题 ────────────────────────────────────────────────
+// ─── Theme ───────────────────────────────────────────────
 
 export const darkMode = {
   toggle: () => invoke('toggle_dark_mode'),
   system: async () => true,
 }
 
-// ─── 外部 URL ────────────────────────────────────────────
+// ─── External URL ────────────────────────────────────────
 
 export async function openExternalUrl(url) {
   try {
     await open(url)
     return true
   } catch (error) {
-    console.error('打开外部URL失败:', error)
+    console.error('Failed to open external URL:', error)
     return false
   }
 }
 
-// ─── VDD 设置 ────────────────────────────────────────────
+// ─── VDD settings ────────────────────────────────────────
 
 export const vdd = {
   getGPUs: () => wrapResult('get_gpus'),
@@ -63,7 +63,7 @@ export const vdd = {
       await invoke('exec_pipe_cmd', { command })
       return true
     } catch (error) {
-      console.error('执行管道命令失败:', error)
+      console.error('Failed to execute pipe command:', error)
       return false
     }
   },
@@ -78,7 +78,7 @@ export const vmouse = {
   setConfig: (enabled) => wrapResult('set_vmouse_config', { enabled }),
 }
 
-// ─── Sunshine 配置 ───────────────────────────────────────
+// ─── Sunshine config ─────────────────────────────────────
 
 export const sunshine = {
   getVersion: () => wrapDefault('get_sunshine_version', 'Unknown'),
@@ -92,7 +92,7 @@ export const sunshine = {
   changeBitrate: (clientName, bitrate) => invoke('change_bitrate', { clientName, bitrate }),
 }
 
-// ─── 系统工具 ────────────────────────────────────────────
+// ─── System tools ────────────────────────────────────────
 
 export const tools = {
   restartGraphicsDriver: () => invoke('restart_graphics_driver'),
@@ -117,13 +117,13 @@ export const moonlightWeb = {
   generateCert: () => invoke('moonlight_web_generate_cert'),
 }
 
-// ─── 文件系统 ────────────────────────────────────────────
+// ─── File system ─────────────────────────────────────────
 
 export async function readDirectory(path) {
   return []
 }
 
-// ─── 导出 ────────────────────────────────────────────────
+// ─── Exports ─────────────────────────────────────────────
 
 export default {
   darkMode,

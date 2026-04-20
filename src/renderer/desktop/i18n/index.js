@@ -6,13 +6,13 @@ const messages = { zh, en }
 
 const currentLocale = ref(localStorage.getItem('language') || 'en')
 
-// 从 Sunshine 配置同步语言设置（初始化时调用一次）
+// Sync language setting from Sunshine config (called once during init)
 let syncInitialized = false
 async function syncLocaleFromSunshine() {
   if (syncInitialized) return
   syncInitialized = true
   try {
-    // 优先使用 tray 当前语言（避免新窗口初始化时覆盖 tray 语言）
+    // Prefer the tray's current language (avoids new windows overriding the tray language on init)
     const { invoke } = await import('@tauri-apps/api/core')
     const trayLocale = await invoke('get_tray_locale')
     if (trayLocale && (trayLocale === 'zh' || trayLocale === 'en')) {
@@ -20,29 +20,29 @@ async function syncLocaleFromSunshine() {
         currentLocale.value = trayLocale
         localStorage.setItem('language', trayLocale)
       }
-      return // tray 已有语言状态，不需要再从 Sunshine 配置读取
+      return // Tray already has a language state; no need to read from Sunshine config
     }
   } catch {
-    // invoke 不可用，继续尝试 Sunshine 配置
+    // invoke is unavailable; fall through to Sunshine config
   }
   try {
     const { sunshine } = await import('../../tauri-adapter.js')
     const sunshineLocale = await sunshine.getLocale()
-    // Sunshine 用 'zh'/'zh_TW' 等，桌面 GUI 只有 'zh'/'en'
+    // Sunshine uses 'zh'/'zh_TW' etc.; desktop GUI only has 'zh'/'en'
     const guiLocale = sunshineLocale.startsWith('zh') ? 'zh' : 'en'
     if (guiLocale !== currentLocale.value) {
       currentLocale.value = guiLocale
       localStorage.setItem('language', guiLocale)
     }
-    // 同步当前语言到托盘
+    // Sync the current language to the tray
     syncLocaleToTray(guiLocale)
   } catch {
-    // 非 Tauri 环境或 API 不可用，忽略
+    // Not running under Tauri or API unavailable; ignore
   }
 }
 syncLocaleFromSunshine()
 
-// 监听托盘语言切换事件
+// Listen for tray language-switch events
 async function listenTrayLocaleChanged() {
   try {
     const { listen } = await import('@tauri-apps/api/event')
@@ -51,23 +51,23 @@ async function listenTrayLocaleChanged() {
       if (newLocale && newLocale !== currentLocale.value) {
         currentLocale.value = newLocale
         localStorage.setItem('language', newLocale)
-        // 同步到 Sunshine 配置
+        // Sync to Sunshine config
         syncLocaleToSunshine(newLocale)
       }
     })
   } catch {
-    // 非 Tauri 环境，忽略
+    // Not running under Tauri; ignore
   }
 }
 listenTrayLocaleChanged()
 
-// 同步语言到托盘
+// Sync language to tray
 async function syncLocaleToTray(locale) {
   try {
     const { invoke } = await import('@tauri-apps/api/core')
     await invoke('set_tray_locale', { locale })
   } catch {
-    // 忽略
+    // ignore
   }
 }
 
@@ -83,9 +83,9 @@ export function useI18n() {
   const toggleLocale = () => {
     const newLocale = locale.value === 'zh' ? 'en' : 'zh'
     locale.value = newLocale
-    // 异步同步到 Sunshine 配置
+    // Asynchronously sync to Sunshine config
     syncLocaleToSunshine(newLocale)
-    // 同步到托盘
+    // Sync to tray
     syncLocaleToTray(newLocale)
   }
   return { t, locale, toggleLocale }
@@ -95,7 +95,7 @@ async function syncLocaleToSunshine(locale) {
   try {
     const { sunshine } = await import('../../tauri-adapter.js')
     await sunshine.setLocale(locale)
-    // 通知 SunshineFrame 刷新 iframe 以应用新语言
+    // Notify SunshineFrame to refresh the iframe so the new language applies
     window.dispatchEvent(new CustomEvent('locale-changed', { detail: { locale } }))
   } catch (e) {
     console.warn('Failed to sync locale to Sunshine:', e)

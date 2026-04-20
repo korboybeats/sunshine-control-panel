@@ -28,14 +28,14 @@ defineEmits(['close'])
 
 const renderedMarkdown = ref('')
 
-// 初始化 markdown-it
+// Initialize markdown-it
 const md = new MarkdownIt({
   html: false,
   breaks: true,
   linkify: true,
 })
 
-// 自定义渲染规则：code_inline -> kbd
+// Custom render rule: code_inline -> kbd
 const defaultCodeInlineRender =
   md.renderer.rules.code_inline || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
 md.renderer.rules.code_inline = (tokens, idx, options, env, self) => {
@@ -43,7 +43,7 @@ md.renderer.rules.code_inline = (tokens, idx, options, env, self) => {
   return `<kbd>${token.content}</kbd>`
 }
 
-// 自定义渲染规则：blockquote -> note
+// Custom render rule: blockquote -> note
 const defaultBlockquoteOpen =
   md.renderer.rules.blockquote_open || ((tokens, idx, options, env, self) => self.renderToken(tokens, idx, options))
 md.renderer.rules.blockquote_open = () => {
@@ -123,7 +123,7 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-/* Markdown 渲染样式 - 白色主题 */
+/* Markdown render styles — white theme */
 .tool-content :deep(h1) {
   font-size: 22px;
   color: white;
@@ -228,7 +228,7 @@ onMounted(() => {
   font-size: 13px;
 }
 
-/* 滚动条样式 */
+/* Scrollbar styles */
 .tool-content::-webkit-scrollbar {
   width: 6px;
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="system-tools">
-    <!-- 这个组件提供工具函数的 UI 交互 -->
+    <!-- This component provides UI interactions for tool utility functions -->
   </div>
 </template>
 
@@ -11,7 +11,7 @@ import { useI18n } from '../desktop/i18n/index.js'
 
 const { t } = useI18n()
 
-// 暴露给全局使用的函数
+// Functions exposed for global use
 defineExpose({
   async confirmAndUninstallVdd() {
     try {
@@ -69,7 +69,7 @@ defineExpose({
       
       await tools.restartSunshineService()
       
-      // 显示详细的成功提示
+      // Show a detailed success notification
       await ElMessageBox.alert(
         t.value.systemTools.restartSunshineMsg,
         t.value.systemTools.restartSunshineSuccess,
@@ -79,7 +79,7 @@ defineExpose({
         }
       )
       
-      // 3秒后关闭窗口
+      // Close the window after 3 seconds
       setTimeout(() => {
         if (window.__TAURI__) {
           window.__TAURI__.window.getCurrent().close()

@@ -64,7 +64,7 @@ const windowClass = computed(() => {
   font-size: var(--fd-font-size, 14px);
   position: relative;
 
-  // 壁纸层
+  // Wallpaper layer
   .wallpaper-layer {
     position: absolute;
     inset: 0;
@@ -83,7 +83,7 @@ const windowClass = computed(() => {
     }
   }
 
-  // 背景网格效果
+  // Background grid effect
   &::before {
     content: '';
     position: absolute;
@@ -100,7 +100,7 @@ const windowClass = computed(() => {
     opacity: var(--fd-grid-visible, 1);
   }
 
-  // 扫描线效果
+  // Scanline effect
   &::after {
     content: '';
     position: absolute;

@@ -1,35 +1,35 @@
 import { ElMessage } from 'element-plus'
 
 /**
- * 窗口控制 Composable
+ * Window controls Composable
  */
 export function useWindowControls(isMaximized) {
   /**
-   * 执行窗口操作
-   * @param {string} action - 操作名称 (minimize/hide)
-   * @param {string} actionName - 操作显示名称
+   * Perform a window action
+   * @param {string} action - action name (minimize/hide)
+   * @param {string} actionName - action display name
    */
   const performWindowAction = async (action, actionName) => {
     try {
       const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow')
       const currentWindow = getCurrentWebviewWindow()
       await currentWindow[action]()
-      console.log(`✅ 窗口已${actionName}`)
+      console.log(`✅ Window ${actionName}`)
     } catch (error) {
-      console.error(`${actionName}窗口失败:`, error)
-      ElMessage.error(`${actionName}失败: ${error.message}`)
+      console.error(`Failed to ${actionName} window:`, error)
+      ElMessage.error(`Failed to ${actionName}: ${error.message}`)
     }
   }
 
   /**
-   * 最小化窗口
+   * Minimize the window
    */
   const minimizeWindow = async () => {
-    await performWindowAction('minimize', '最小化')
+    await performWindowAction('minimize', 'minimize')
   }
 
   /**
-   * 切换最大化状态
+   * Toggle maximized state
    */
   const toggleMaximize = async () => {
     try {
@@ -41,23 +41,23 @@ export function useWindowControls(isMaximized) {
       if (maximized) {
         await window.unmaximize()
         isMaximized.value = false
-        console.log('✅ 窗口已还原')
+        console.log('✅ Window restored')
       } else {
         await window.maximize()
         isMaximized.value = true
-        console.log('✅ 窗口已最大化')
+        console.log('✅ Window maximized')
       }
     } catch (error) {
-      console.error('❌ 切换最大化失败:', error)
-      ElMessage.error(`切换最大化失败: ${error}`)
+      console.error('❌ Failed to toggle maximize:', error)
+      ElMessage.error(`Failed to toggle maximize: ${error}`)
     }
   }
 
   /**
-   * 关闭窗口（隐藏）
+   * Close window (hide)
    */
   const closeWindow = async () => {
-    await performWindowAction('hide', '隐藏')
+    await performWindowAction('hide', 'hide')
   }
 
   return {

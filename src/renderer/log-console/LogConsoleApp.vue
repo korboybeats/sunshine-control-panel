@@ -1,6 +1,6 @@
 <template>
   <div class="log-console">
-    <!-- 头部 -->
+    <!-- Header -->
     <div class="header">
       <div class="title">
         <el-icon class="title-icon"><Document /></el-icon>
@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <!-- 过滤栏 -->
+    <!-- Filter bar -->
     <div class="filter-bar">
       <div class="filter-group">
         <span class="filter-label">{{ t.logConsole.filterLevel }}:</span>
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <!-- 搜索栏 -->
+    <!-- Search bar -->
     <div class="search-bar">
       <div class="search-input-wrapper">
         <el-icon class="search-icon"><Search /></el-icon>
@@ -84,7 +84,7 @@
       </div>
     </div>
 
-    <!-- 日志容器 -->
+    <!-- Log container -->
     <div class="log-container" ref="logContainer">
       <div v-if="filteredLogs.length === 0" class="empty-state">
         <div class="empty-state-icon-wrapper">
@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    <!-- 统计栏 -->
+    <!-- Stats bar -->
     <div class="stats">
       <div class="stat-item">
         <span>{{ t.logConsole.total }}:</span>
@@ -136,23 +136,23 @@ import { useI18n } from '../desktop/i18n/index.js'
 
 const { t, locale, toggleLocale } = useI18n()
 
-// 响应式数据
+// Reactive state
 const allLogs = ref([])
 const loading = ref(false)
 const logContainer = ref(null)
 const searchKeyword = ref('')
 
-// 过滤器
+// Filters
 const filters = ref({
   error: true,
   warn: true,
   info: true,
   debug: false,
   trace: false,
-  file: '', // 文件来源过滤
+  file: '', // Filter by source file
 })
 
-// 计算属性：获取所有可用的文件来源
+// Computed: all available source files
 const availableFiles = computed(() => {
   const files = new Set()
   allLogs.value.forEach((log) => {
@@ -163,7 +163,7 @@ const availableFiles = computed(() => {
   return Array.from(files).sort()
 })
 
-// 计算属性：过滤后的日志（同时考虑级别、文件来源和关键词）
+// Computed: filtered logs (applies level, source file and keyword filters)
 const filteredLogs = computed(() => {
   const enabledLevels = Object.entries(filters.value)
     .filter(([key, enabled]) => key !== 'file' && enabled)
@@ -171,12 +171,12 @@ const filteredLogs = computed(() => {
 
   let filtered = allLogs.value.filter((log) => enabledLevels.includes(log.level))
 
-  // 如果选择了文件来源，进行文件过滤
+  // Apply source-file filter if set
   if (filters.value.file) {
     filtered = filtered.filter((log) => log.file === filters.value.file)
   }
 
-  // 如果有关键词，进行搜索过滤
+  // Apply keyword search if present
   if (searchKeyword.value.trim()) {
     const keyword = searchKeyword.value.trim().toLowerCase()
     filtered = filtered.filter((log) => {
@@ -191,7 +191,7 @@ const filteredLogs = computed(() => {
   return filtered
 })
 
-// 高亮消息中的关键词
+// Highlight keyword in the message
 function highlightMessage(message) {
   if (!searchKeyword.value.trim()) {
     return escapeHtml(message)
@@ -203,21 +203,21 @@ function highlightMessage(message) {
   return highlighted
 }
 
-// HTML 转义
+// HTML escape
 function escapeHtml(text) {
   const div = document.createElement('div')
   div.textContent = text
   return div.innerHTML
 }
 
-// 正则表达式转义
+// Regex escape
 function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// 处理搜索输入
+// Handle search input
 function handleSearchInput() {
-  // 搜索时自动滚动到第一个匹配项
+  // Auto-scroll to the first match
   nextTick(() => {
     if (logContainer.value && filteredLogs.value.length > 0) {
       const firstMatch = logContainer.value.querySelector('.log-entry')
@@ -228,12 +228,12 @@ function handleSearchInput() {
   })
 }
 
-// 清除搜索
+// Clear search
 function clearSearch() {
   searchKeyword.value = ''
 }
 
-// 计算属性：统计信息
+// Computed: stats
 const stats = computed(() => {
   return {
     total: allLogs.value.length,
@@ -243,12 +243,12 @@ const stats = computed(() => {
   }
 })
 
-// 加载所有日志
+// Load all logs
 async function loadLogs() {
   loading.value = true
   try {
     const logs = await invoke('get_all_logs')
-    allLogs.value = logs.reverse() // 最新的在前
+    allLogs.value = logs.reverse() // Newest first
   } catch (error) {
     console.error('Failed to load logs:', error)
   } finally {
@@ -256,7 +256,7 @@ async function loadLogs() {
   }
 }
 
-// 清空日志
+// Clear logs
 async function clearLogs() {
   if (await confirm(t.value.logConsole.confirmClear)) {
     try {
@@ -269,20 +269,20 @@ async function clearLogs() {
   }
 }
 
-// 导出日志
+// Export logs
 async function exportLogs(format) {
   try {
     const result = await invoke('export_logs', { format })
     alert(result || t.value.logConsole.exportSuccess)
   } catch (error) {
     console.error('Failed to export logs:', error)
-    if (error && !error.includes('用户取消了保存')) {
+    if (error && !error.includes('User cancelled the save')) {
       alert(t.value.logConsole.exportFailed + ': ' + error)
     }
   }
 }
 
-// 滚动到底部
+// Scroll to bottom
 function scrollToBottom() {
   nextTick(() => {
     if (logContainer.value) {
@@ -291,20 +291,20 @@ function scrollToBottom() {
   })
 }
 
-// 监听新日志事件
+// Listen for new log events
 let unsubscribe = null
 
 onMounted(async () => {
-  // 初始加载
+  // Initial load
   await loadLogs()
   scrollToBottom()
 
-  // 监听新日志事件
+  // Listen for new log events
   unsubscribe = await listen('log-entry', (event) => {
     const newLog = event.payload
-    allLogs.value.unshift(newLog) // 添加到开头
+    allLogs.value.unshift(newLog) // Prepend
 
-    // 限制日志数量
+    // Cap log count
     if (allLogs.value.length > 10000) {
       allLogs.value = allLogs.value.slice(0, 10000)
     }

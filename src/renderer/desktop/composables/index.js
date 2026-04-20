@@ -1,5 +1,4 @@
 /**
- * 桌面应用 Composables
  * Desktop Application Composables
  */
 

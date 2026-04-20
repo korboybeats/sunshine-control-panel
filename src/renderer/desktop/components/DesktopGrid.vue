@@ -28,7 +28,7 @@ const props = defineProps({
   display: grid;
   gap: 24px;
 
-  // 列数
+  // Column count
   &.cols-1 {
     grid-template-columns: 1fr;
   }
@@ -53,7 +53,7 @@ const props = defineProps({
     grid-template-columns: repeat(6, 1fr);
   }
 
-  // 间距
+  // Spacing
   &.gap-xs {
     gap: 8px;
   }
@@ -74,7 +74,7 @@ const props = defineProps({
     gap: 48px;
   }
 
-  // 响应式
+  // Responsive
   &.responsive {
     @media (max-width: 1400px) {
       &.cols-6 {

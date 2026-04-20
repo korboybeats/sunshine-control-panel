@@ -24,7 +24,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const props = defineProps({
   modelValue: { type: [Number, String], required: true },
   options: { type: Array, required: true },
-  placeholder: { type: String, default: '请选择' },
+  placeholder: { type: String, default: 'Select...' },
 })
 
 const emit = defineEmits(['update:modelValue'])

@@ -1,8 +1,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 /**
- * 窗口控制 composable
- * 提供窗口的最小化、最大化、关闭等功能
+ * Window-controls composable
+ * Provides minimize/maximize/close and related window operations
  */
 export function useWindowControls() {
   const tauriWindow = ref(null)
@@ -13,7 +13,7 @@ export function useWindowControls() {
   let unlistenResize = null
   let unlistenFocus = null
 
-  // 初始化 Tauri 窗口
+  // Initialize the Tauri window
   async function initWindow() {
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window')
@@ -24,7 +24,7 @@ export function useWindowControls() {
         isMinimized.value = await tauriWindow.value.isMinimized()
         isFocused.value = await tauriWindow.value.isFocused()
 
-        // 监听窗口大小变化
+        // Listen for window resize
         unlistenResize = await tauriWindow.value.onResized(async () => {
           if (tauriWindow.value) {
             isMaximized.value = await tauriWindow.value.isMaximized()
@@ -32,7 +32,7 @@ export function useWindowControls() {
           }
         })
 
-        // 监听窗口焦点变化
+        // Listen for window focus changes
         unlistenFocus = await tauriWindow.value.onWindowEvent((event) => {
           if (event.event === 'tauri://focus') {
             isFocused.value = true
@@ -46,7 +46,7 @@ export function useWindowControls() {
     }
   }
 
-  // 最小化窗口
+  // Minimize the window
   async function minimize() {
     if (tauriWindow.value) {
       await tauriWindow.value.minimize()
@@ -54,7 +54,7 @@ export function useWindowControls() {
     }
   }
 
-  // 最大化/还原窗口
+  // Maximize / restore the window
   async function maximize() {
     if (tauriWindow.value) {
       await tauriWindow.value.maximize()
@@ -62,7 +62,7 @@ export function useWindowControls() {
     }
   }
 
-  // 还原窗口
+  // Restore the window
   async function unmaximize() {
     if (tauriWindow.value) {
       await tauriWindow.value.unmaximize()
@@ -70,7 +70,7 @@ export function useWindowControls() {
     }
   }
 
-  // 切换最大化状态
+  // Toggle maximize state
   async function toggleMaximize() {
     if (tauriWindow.value) {
       await tauriWindow.value.toggleMaximize()
@@ -78,14 +78,14 @@ export function useWindowControls() {
     }
   }
 
-  // 关闭窗口
+  // Close the window
   async function close() {
     if (tauriWindow.value) {
       await tauriWindow.value.close()
     }
   }
 
-  // 显示窗口
+  // Show the window
   async function show() {
     if (tauriWindow.value) {
       await tauriWindow.value.show()
@@ -93,14 +93,14 @@ export function useWindowControls() {
     }
   }
 
-  // 隐藏窗口
+  // Hide the window
   async function hide() {
     if (tauriWindow.value) {
       await tauriWindow.value.hide()
     }
   }
 
-  // 聚焦窗口
+  // Focus the window
   async function setFocus() {
     if (tauriWindow.value) {
       await tauriWindow.value.setFocus()
@@ -108,21 +108,21 @@ export function useWindowControls() {
     }
   }
 
-  // 居中窗口
+  // Center the window
   async function center() {
     if (tauriWindow.value) {
       await tauriWindow.value.center()
     }
   }
 
-  // 设置窗口大小
+  // Set window size
   async function setSize(width, height) {
     if (tauriWindow.value) {
       await tauriWindow.value.setSize({ width, height })
     }
   }
 
-  // 获取窗口大小
+  // Get window size
   async function getSize() {
     if (tauriWindow.value) {
       return await tauriWindow.value.innerSize()

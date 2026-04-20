@@ -25,7 +25,7 @@ const closeWindow = async () => {
     const window = getCurrentWindow()
     await window.close()
   } catch (error) {
-    console.error('关闭窗口失败:', error)
+    console.error('Failed to close window:', error)
   }
 }
 
@@ -34,7 +34,7 @@ const getToolType = () => {
   return params.get('tool') || 'dpi'
 }
 
-// ESC 键关闭
+// Close on ESC key
 const handleKeyDown = (e) => {
   if (e.key === 'Escape') {
     closeWindow()
@@ -43,9 +43,9 @@ const handleKeyDown = (e) => {
 
 onMounted(async () => {
   const toolType = getToolType()
-  console.log('加载工具:', toolType)
+  console.log('Loading tool:', toolType)
 
-  // 添加键盘事件监听
+  // Register keyboard event listener
   window.addEventListener('keydown', handleKeyDown)
 
   try {
@@ -63,14 +63,14 @@ onMounted(async () => {
         currentTool.value = defineAsyncComponent(() => import('./tools/RtssOsdTool.vue'))
         break
       default:
-        console.error('未知的工具类型:', toolType)
+        console.error('Unknown tool type:', toolType)
     }
   } catch (error) {
-    console.error('加载工具失败:', error)
+    console.error('Failed to load tool:', error)
   }
 })
 
-// 清理事件监听
+// Clean up event listeners
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
 })

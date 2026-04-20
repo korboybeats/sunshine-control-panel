@@ -1,5 +1,5 @@
 <template>
-  <!-- 状态指示 -->
+  <!-- Status indicator -->
   <div class="status-bar" :class="{ online: status.running, offline: !status.running }">
     <span class="status-dot"></span>
     <span v-if="loading">{{ t.rtssTool.checking }}</span>
@@ -10,7 +10,7 @@
     <button class="refresh-btn" @click="$emit('refresh')" :disabled="loading" :title="t.rtssTool.refresh">↻</button>
   </div>
 
-  <!-- rtss-cli 检测 -->
+  <!-- rtss-cli detection -->
   <div v-if="status.running && !status.cli_path" class="warning-box">
     <div class="warning-text">⚠️ {{ t.rtssTool.cliNotFound }}</div>
     <button class="download-btn" @click="downloadCli" :disabled="downloading">
@@ -39,7 +39,7 @@ async function downloadCli() {
   try {
     const path = await invoke('rtss_download_cli')
     emit('message', t.value.rtssTool.cliDownloaded, 'success')
-    // 刷新状态以检测新下载的 cli
+    // Refresh status to detect the newly downloaded CLI
     emit('refresh')
   } catch (e) {
     emit('message', String(e), 'error')

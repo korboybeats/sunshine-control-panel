@@ -8,23 +8,23 @@ use log::{debug, error, info, warn};
 
 use crate::{toolbar, update, utils, windows, moonlight_web};
 
-// 托盘图标 ID
+// Tray icon ID
 const TRAY_ID: &str = "main-tray";
 
-// 防止睡眠状态管理
+// Prevent-sleep state
 static PREVENT_SLEEP_STATE: Mutex<bool> = Mutex::new(false);
 
-// 工具栏显示状态管理
+// Toolbar-visible state
 static TOOLBAR_VISIBLE_STATE: Mutex<bool> = Mutex::new(false);
 
-// Sunshine 用户模式状态管理
+// Sunshine user-mode state
 #[cfg(target_os = "windows")]
 static SUNSHINE_USER_MODE_STATE: Mutex<bool> = Mutex::new(false);
 
-// 当前语言状态管理 ("zh" 或 "en")
+// Current locale state ("zh" or "en")
 static CURRENT_LOCALE: Mutex<Option<String>> = Mutex::new(None);
 
-/// 托盘菜单翻译结构
+/// Tray menu translation struct
 struct TrayStrings {
     open_website: &'static str,
     vdd_settings: &'static str,
@@ -109,7 +109,7 @@ mod power {
         let flags = ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED;
         unsafe {
             if SetThreadExecutionState(flags) == 0 {
-                return Err("SetThreadExecutionState 调用失败");
+                return Err("SetThreadExecutionState call failed");
             }
         }
         Ok(())
@@ -118,14 +118,14 @@ mod power {
     pub fn disable_prevent_sleep() -> Result<(), &'static str> {
         unsafe {
             if SetThreadExecutionState(ES_CONTINUOUS) == 0 {
-                return Err("SetThreadExecutionState 调用失败");
+                return Err("SetThreadExecutionState call failed");
             }
         }
         Ok(())
     }
 }
 
-/// 创建系统托盘
+/// Create the system tray
 pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     #[cfg(target_os = "windows")]
     init_sunshine_user_mode_state(app);
@@ -139,7 +139,7 @@ pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         }
     }
 
-    // 初始化工具栏状态
+    // Initialize toolbar state
     let is_toolbar_visible = app.get_webview_window("toolbar")
         .and_then(|w| w.is_visible().ok())
         .unwrap_or(false);
@@ -169,13 +169,13 @@ pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
-/// 初始化 Sunshine 用户模式状态（仅 Windows）
+/// Initialize the Sunshine user-mode state (Windows only)
 #[cfg(target_os = "windows")]
 fn init_sunshine_user_mode_state<R: Runtime>(app: &AppHandle<R>) {
-    // 使用默认值 false，避免阻塞启动
+    // Use `false` as default to avoid blocking startup
     *SUNSHINE_USER_MODE_STATE.lock().unwrap() = false;
-    
-    // 异步更新 Sunshine 用户模式状态（不阻塞启动；阻塞的 sc/tasklist 放在 spawn_blocking 中）
+
+    // Asynchronously update the Sunshine user-mode state (don't block startup; the blocking sc/tasklist calls go in spawn_blocking)
     let _app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(Duration::from_millis(500)).await;
@@ -183,19 +183,19 @@ fn init_sunshine_user_mode_state<R: Runtime>(app: &AppHandle<R>) {
         match tokio::task::spawn_blocking(crate::sunshine::is_sunshine_running_in_user_mode_impl).await {
             Ok(Ok(is_user_mode)) => {
                 *SUNSHINE_USER_MODE_STATE.lock().unwrap() = is_user_mode;
-                debug!("✅ Sunshine 用户模式状态已异步更新: {}", is_user_mode);
+                debug!("✅ Sunshine user-mode state updated asynchronously: {}", is_user_mode);
             }
             Ok(Err(e)) => {
-                debug!("⚠️ 检查 Sunshine 用户模式状态失败: {}", e);
+                debug!("⚠️ Failed to check Sunshine user-mode state: {}", e);
             }
             Err(e) => {
-                debug!("⚠️ spawn_blocking 检查用户模式失败: {}", e);
+                debug!("⚠️ spawn_blocking user-mode check failed: {}", e);
             }
         }
     });
 }
 
-/// 构建托盘菜单
+/// Build the tray menu
 fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let s = get_tray_strings();
     let current_locale = get_current_locale();
@@ -203,7 +203,7 @@ fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let open_website = MenuItem::with_id(app, "open_website", s.open_website, true, None::<&str>)?;
     let vdd_settings = MenuItem::with_id(app, "vdd_settings", s.vdd_settings, true, None::<&str>)?;
     
-    // 从状态获取工具栏是否显示
+    // Read toolbar-visible state
     let is_toolbar_visible = *TOOLBAR_VISIBLE_STATE.lock().unwrap();
     let show_toolbar = CheckMenuItem::with_id(app, "show_toolbar", s.show_toolbar, true, is_toolbar_visible, None::<&str>)?;
     
@@ -215,7 +215,7 @@ fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let about = MenuItem::with_id(app, "about", s.about, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", s.quit, true, None::<&str>)?;
 
-    // 语言子菜单
+    // Language submenu (Chinese label "中文" intentional — it's the native name of the Chinese option)
     let lang_zh = CheckMenuItem::with_id(app, "lang_zh", "中文", true, current_locale == "zh", None::<&str>)?;
     let lang_en = CheckMenuItem::with_id(app, "lang_en", "English", true, current_locale == "en", None::<&str>)?;
     let lang_submenu = Submenu::with_id_and_items(app, "language", s.language, true, &[&lang_zh, &lang_en])?;
@@ -266,7 +266,7 @@ fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     Menu::with_items(app, &items)
 }
 
-/// 处理托盘单击事件
+/// Handle tray single-click
 pub fn handle_tray_click<R: Runtime>(app: &AppHandle<R>) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {

@@ -9,7 +9,7 @@
 
     <div class="vmouse-content">
       <el-form label-width="130px" class="vmouse-form">
-        <!-- 驱动状态 -->
+        <!-- Driver status -->
         <el-form-item :label="t.vmouseSettings.driverStatus">
           <div class="status-row">
             <el-tag :type="statusTagType" effect="dark" size="large">
@@ -20,7 +20,7 @@
           </div>
         </el-form-item>
 
-        <!-- 启用开关（sunshine.conf 中的 virtual_mouse） -->
+        <!-- Enable switch (virtual_mouse in sunshine.conf) -->
         <el-form-item :label="t.vmouseSettings.functionSwitch">
           <el-switch
             v-model="configEnabled"
@@ -32,12 +32,12 @@
           <span class="form-tip">{{ t.vmouseSettings.switchTip }}</span>
         </el-form-item>
 
-        <!-- 驱动路径 -->
+        <!-- Driver path -->
         <el-form-item :label="t.vmouseSettings.driverPath" v-if="status.driver_path">
           <span class="driver-path">{{ status.driver_path }}</span>
         </el-form-item>
 
-        <!-- 说明 -->
+        <!-- Description -->
         <el-form-item :label="t.vmouseSettings.description">
           <div class="description">
             <p>{{ t.vmouseSettings.descText1 }}</p>
@@ -45,7 +45,7 @@
           </div>
         </el-form-item>
 
-        <!-- 安装/卸载按钮 -->
+        <!-- Install / uninstall buttons -->
         <el-form-item class="form-actions">
           <el-button
             v-if="!status.installed"
@@ -136,7 +136,7 @@ const handleConfigToggle = async (enabled) => {
     }
   } catch (error) {
     ElMessage.error(t.value.vmouseSettings.setFailed.replace('{error}', error.message || error))
-    // 回滚开关
+    // Roll back the switch
     configEnabled.value = !enabled
   } finally {
     configSaving.value = false
@@ -159,7 +159,7 @@ const installDriver = async () => {
     const result = await vmouse.install()
     if (result?.success) {
       ElMessage.success(result.data)
-      // 等一下再刷新状态
+      // Wait a moment, then refresh the status
       setTimeout(() => refreshStatus(), 2000)
     } else {
       throw new Error(result?.message || t.value.vmouseSettings.installFailed)
@@ -217,7 +217,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-// ========== 深色模式 ==========
+// ========== Dark mode ==========
 [data-bs-theme='dark'] {
   .vmouse-header {
     border-bottom: 1px solid rgba(230, 213, 184, 0.15);
@@ -264,7 +264,7 @@ onMounted(() => {
   }
 }
 
-// ========== 浅色模式 ==========
+// ========== Light mode ==========
 [data-bs-theme='light'] {
   .vmouse-header {
     border-bottom: 1px solid rgba(74, 158, 255, 0.2);
@@ -311,7 +311,7 @@ onMounted(() => {
   }
 }
 
-// ========== 通用样式 ==========
+// ========== Common styles ==========
 .vmouse-header {
   display: flex;
   justify-content: space-between;

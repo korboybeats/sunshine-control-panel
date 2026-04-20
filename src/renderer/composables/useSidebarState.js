@@ -14,25 +14,25 @@ const THEME = {
 }
 
 /**
- * 规范化版本号（移除 v/V 前缀）
+ * Normalize a version string (strip a leading v/V)
  */
 const normalizeVersion = (version) => version?.replace(/^[vV]/, '') || ''
 
 /**
- * 向 iframe 发送消息
+ * Send a postMessage to all iframes
  */
 const postMessageToIframes = (message) => {
   document.querySelectorAll('iframe').forEach((iframe) => {
     try {
       iframe.contentWindow?.postMessage(message, '*')
     } catch {
-      // 跨域限制，忽略错误
+      // Cross-origin restrictions — ignore errors
     }
   })
 }
 
 /**
- * 获取 Tauri invoke 函数
+ * Get the Tauri invoke function
  */
 const getInvoke = async () => {
   const { invoke } = await import('@tauri-apps/api/core')
@@ -40,7 +40,7 @@ const getInvoke = async () => {
 }
 
 /**
- * 安全地从 localStorage 读取布尔值
+ * Safely read a boolean from localStorage
  */
 const getStoredBoolean = (key, defaultValue = false) => {
   const value = localStorage.getItem(key)
@@ -48,12 +48,12 @@ const getStoredBoolean = (key, defaultValue = false) => {
 }
 
 /**
- * 侧边栏状态管理 Composable
+ * Sidebar state-management Composable
  */
 export function useSidebarState() {
   const router = useRouter()
 
-  // 状态定义
+  // State definitions
   const isCollapsed = ref(false)
   const isDark = ref(true)
   const isMaximized = ref(false)
@@ -64,16 +64,16 @@ export function useSidebarState() {
   const skippedVersion = ref(localStorage.getItem(STORAGE_KEYS.SKIPPED_VERSION) || '')
   const includePrerelease = ref(false)
 
-  // 清理函数存储
+  // Cleanup function registry
   const cleanupFns = []
 
-  // 计算属性
+  // Computed properties
   const showVddSettings = computed(() => router.isRoute(ROUTES.VDD_SETTINGS))
   const showWelcome = computed(() => router.isRoute(ROUTES.WELCOME))
   const currentTheme = computed(() => (isDark.value ? THEME.DARK : THEME.LIGHT))
 
   /**
-   * 同步主题到 DOM 和 localStorage
+   * Sync the theme to DOM and localStorage
    */
   const syncTheme = () => {
     document.documentElement?.setAttribute('data-bs-theme', currentTheme.value)
@@ -81,23 +81,23 @@ export function useSidebarState() {
   }
 
   /**
-   * 切换主题
+   * Toggle the theme
    */
   const toggleTheme = () => {
     isDark.value = !isDark.value
     syncTheme()
     postMessageToIframes({ type: 'theme-sync', theme: currentTheme.value })
-    ElMessage.success(isDark.value ? '已切换到深色模式' : '已切换到浅色模式')
+    ElMessage.success(isDark.value ? 'Switched to dark mode' : 'Switched to light mode')
   }
 
   /**
-   * 切换折叠状态
+   * Toggle collapsed state
    */
   const toggleCollapse = () => {
     isCollapsed.value = !isCollapsed.value
   }
 
-  // 导航方法
+  // Navigation methods
   const openVddSettings = () => router.navigate(ROUTES.VDD_SETTINGS)
   const openWelcome = () => router.navigate(ROUTES.WELCOME)
   const openWebStream = () => router.navigate(ROUTES.WEB_STREAM)
@@ -105,18 +105,18 @@ export function useSidebarState() {
   const goHome = () => router.goHome()
 
   /**
-   * 忽略指定版本的更新
+   * Ignore the specified version's update
    */
   const skipVersion = (version) => {
     if (!version) return
     const normalized = normalizeVersion(version)
     skippedVersion.value = normalized
     localStorage.setItem(STORAGE_KEYS.SKIPPED_VERSION, normalized)
-    ElMessage.info(`已忽略版本 ${version}，下次自动检查更新时将跳过此版本`)
+    ElMessage.info(`Version ${version} ignored — automatic update checks will skip it next time`)
   }
 
   /**
-   * 检查版本是否被忽略
+   * Check whether a version has been ignored
    */
   const isVersionSkipped = (version) => {
     if (!version || !skippedVersion.value) return false
@@ -124,7 +124,7 @@ export function useSidebarState() {
   }
 
   /**
-   * 初始化 beta 更新偏好
+   * Initialize the beta-update preference
    */
   const initIncludePrerelease = async () => {
     try {
@@ -140,13 +140,13 @@ export function useSidebarState() {
         localStorage.setItem(STORAGE_KEYS.INCLUDE_PRERELEASE, includePrerelease.value.toString())
       }
     } catch (error) {
-      console.error('加载内测偏好设置失败:', error)
+      console.error('Failed to load beta preference:', error)
       includePrerelease.value = getStoredBoolean(STORAGE_KEYS.INCLUDE_PRERELEASE)
     }
   }
 
   /**
-   * 设置是否包含预发布版本的偏好
+   * Set the include-prerelease preference
    */
   const setIncludePrerelease = async (value) => {
     includePrerelease.value = value
@@ -156,25 +156,25 @@ export function useSidebarState() {
       const invoke = await getInvoke()
       await invoke('set_include_prerelease_preference', { include: value })
     } catch (error) {
-      console.error('保存内测偏好设置失败:', error)
+      console.error('Failed to save beta preference:', error)
     }
   }
 
   /**
-   * 初始化管理员状态
+   * Initialize admin-privilege status
    */
   const initAdminStatus = async () => {
     try {
       const invoke = await getInvoke()
       isAdmin.value = await invoke('is_running_as_admin')
-      console.log(isAdmin.value ? '✅ 当前以管理员权限运行' : '⚠️ 当前未以管理员权限运行')
+      console.log(isAdmin.value ? '✅ Running with admin privileges' : '⚠️ Not running as admin')
     } catch (error) {
-      console.error('检测管理员权限失败:', error)
+      console.error('Failed to detect admin privileges:', error)
     }
   }
 
   /**
-   * 初始化主题
+   * Initialize theme
    */
   const initTheme = () => {
     const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME)
@@ -185,35 +185,35 @@ export function useSidebarState() {
   }
 
   /**
-   * 初始化窗口状态
+   * Initialize window state
    */
   const initWindowState = async () => {
     try {
       const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow')
       isMaximized.value = await getCurrentWebviewWindow().isMaximized()
     } catch (error) {
-      console.error('检测窗口状态失败:', error)
+      console.error('Failed to detect window state:', error)
     }
   }
 
   /**
-   * 初始化版本信息
+   * Initialize version info
    */
   const initVersion = async () => {
     try {
       const invoke = await getInvoke()
       currentVersion.value = (await invoke('get_sunshine_version')) || 'Unknown'
     } catch (error) {
-      console.error('获取 Sunshine 版本失败:', error)
+      console.error('Failed to get Sunshine version:', error)
       currentVersion.value = 'Unknown'
     }
   }
 
   /**
-   * 初始化事件监听
+   * Initialize event listeners
    */
   const initEventListeners = async () => {
-    // iframe 主题请求监听
+    // Listen for iframe theme requests
     const handleMessage = ({ origin, data }) => {
       const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1')
       if (isLocalhost && data.type === 'request-theme') {
@@ -223,11 +223,11 @@ export function useSidebarState() {
     window.addEventListener('message', handleMessage)
     cleanupFns.push(() => window.removeEventListener('message', handleMessage))
 
-    // Tauri 事件监听
+    // Tauri event listeners
     const { listen } = await import('@tauri-apps/api/event')
 
     const unlistenUpdate = await listen('update-available', ({ payload }) => {
-      // is_latest 时跳过“忽略版本”检查，始终弹出
+      // When is_latest, always pop up — bypass the skipped-version check
       if (payload?.is_latest || !isVersionSkipped(payload?.version)) {
         updateInfo.value = payload
         showUpdateDialog.value = true
@@ -238,20 +238,20 @@ export function useSidebarState() {
     const unlistenCheckResult = await listen('update-check-result', ({ payload }) => {
       const { error } = payload
       if (error) {
-        ElMessage.error(`检查更新失败: ${error}`)
+        ElMessage.error(`Update check failed: ${error}`)
       }
     })
     cleanupFns.push(unlistenCheckResult)
   }
 
   /**
-   * 初始化状态
+   * Initialize state
    */
   const initState = async () => {
     initTheme()
-    // 优先初始化偏好设置，确保后端在检查更新前能读取到正确的偏好
+    // Initialize preferences first, so the backend has the right preference before checking for updates
     await initIncludePrerelease()
-    // 然后并行初始化其他状态
+    // Then initialize the rest in parallel
     await Promise.all([
       initAdminStatus(),
       initWindowState(),
@@ -268,7 +268,7 @@ export function useSidebarState() {
   })
 
   return {
-    // 状态
+    // State
     isCollapsed,
     isDark,
     isMaximized,
@@ -282,7 +282,7 @@ export function useSidebarState() {
     includePrerelease,
     router,
 
-    // 方法
+    // Methods
     toggleTheme,
     toggleCollapse,
     openVddSettings,

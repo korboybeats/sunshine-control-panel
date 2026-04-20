@@ -1,4 +1,4 @@
-// 工具栏窗口管理模块
+// Toolbar-window management module
 
 use tauri::{AppHandle, Manager, Runtime, Emitter};
 use std::path::PathBuf;
@@ -6,93 +6,93 @@ use std::fs;
 use log::{warn, error, debug};
 use crate::windows;
 
-// 获取工具栏配置文件路径
+// Get toolbar config file path
 fn get_toolbar_config_path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
     let app_data_dir = app.path().app_data_dir()
-        .map_err(|e| format!("获取应用数据目录失败: {}", e))?;
-    
-    // 确保目录存在
+        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+
+    // Ensure the directory exists
     if !app_data_dir.exists() {
         fs::create_dir_all(&app_data_dir)
-            .map_err(|e| format!("创建应用数据目录失败: {}", e))?;
+            .map_err(|e| format!("Failed to create app data directory: {}", e))?;
     }
-    
+
     Ok(app_data_dir.join("toolbar_config.json"))
 }
 
-// 内部保存工具栏位置函数（供窗口事件处理器使用）
+// Internal function to save toolbar position (used by window event handler)
 pub fn save_toolbar_position_internal<R: Runtime>(app: &AppHandle<R>, x: f64, y: f64) {
     if let Ok(config_path) = get_toolbar_config_path(app) {
         let config = serde_json::json!({
             "x": x,
             "y": y
         });
-        
+
         if let Err(e) = fs::write(&config_path, config.to_string()) {
-            error!("❌ 保存工具栏位置失败: {}", e);
+            error!("❌ Failed to save toolbar position: {}", e);
         } else {
-            debug!("💾 工具栏位置已保存: ({}, {})", x, y);
+            debug!("💾 Toolbar position saved: ({}, {})", x, y);
         }
     }
 }
 
-// 保存工具栏位置（Tauri 命令）
+// Save toolbar position (Tauri command)
 #[tauri::command]
 pub async fn save_toolbar_position(app: AppHandle, x: f64, y: f64) -> Result<(), String> {
     save_toolbar_position_internal(&app, x, y);
     Ok(())
 }
 
-// 加载工具栏位置
+// Load toolbar position
 fn load_toolbar_position<R: Runtime>(app: &AppHandle<R>) -> Option<(f64, f64)> {
     let config_path = match get_toolbar_config_path(app) {
         Ok(path) => path,
         Err(e) => {
-            error!("❌ 获取配置路径失败: {}", e);
+            error!("❌ Failed to get config path: {}", e);
             return None;
         }
     };
-    
+
     if !config_path.exists() {
         return None;
     }
-    
+
     match fs::read_to_string(&config_path) {
         Ok(content) => {
             match serde_json::from_str::<serde_json::Value>(&content) {
                 Ok(config) => {
                     let x = config["x"].as_f64()?;
                     let y = config["y"].as_f64()?;
-                    debug!("📂 加载工具栏位置: ({}, {})", x, y);
+                    debug!("📂 Loaded toolbar position: ({}, {})", x, y);
                     Some((x, y))
                 }
                 Err(e) => {
-                    error!("❌ 解析工具栏配置失败: {}", e);
+                    error!("❌ Failed to parse toolbar config: {}", e);
                     None
                 }
             }
         }
         Err(e) => {
-            error!("❌ 读取工具栏配置失败: {}", e);
+            error!("❌ Failed to read toolbar config: {}", e);
             None
         }
     }
 }
 
-// 辅助函数：创建工具窗口
+// Helper: create a tool window
 pub fn create_tool_window_internal<R: Runtime>(app: &AppHandle<R>, tool_type: &str) {
     const TOOL_WINDOW_ID: &str = "tool_window";
-    
-    // 如果窗口已存在，先关闭它
+
+    // If the window already exists, close it first
     if let Some(window) = app.get_webview_window(TOOL_WINDOW_ID) {
         let _ = window.close();
     }
-    
-    // 创建工具窗口，通过 URL 参数传递工具类型
+
+    // Create the tool window, passing the tool type via URL param
     let url = format!("tool-window/index.html?tool={}", tool_type);
     let title = format!("ZakoToolsWindow - {}", tool_type);
-    debug!("🔧 创建工具窗口 URL: {}", url);
-    
+    debug!("🔧 Creating tool window URL: {}", url);
+
     match tauri::WebviewWindowBuilder::new(
         app,
         TOOL_WINDOW_ID,
@@ -104,38 +104,38 @@ pub fn create_tool_window_internal<R: Runtime>(app: &AppHandle<R>, tool_type: &s
     .transparent(true)
     .always_on_top(true)
     .skip_taskbar(true)
-    .visible(false)  // 先隐藏，避免闪白
+    .visible(false)  // Hide first to avoid white flash
     .build()
     {
         Ok(window) => {
-            // 在生产环境禁用右键菜单
+            // Disable the right-click menu in production
             windows::disable_context_menu(&window);
-            
-            // 禁用自动填充和密码保存提示
+
+            // Disable autofill and password save prompts
             #[cfg(target_os = "windows")]
             windows::configure_webview_security(&window);
-            
-            // 开发模式下自动打开 DevTools
+
+            // Auto-open DevTools in debug
             #[cfg(debug_assertions)]
             {
                 window.open_devtools();
                 let _ = window.set_always_on_top(false);
-                debug!("🔧 [开发模式] 工具窗口已自动打开 DevTools");
+                debug!("🔧 [dev mode] DevTools auto-opened on tool window");
             }
-            
-            // 等待一小段时间让内容加载，然后显示窗口
+
+            // Wait briefly for content to load, then show the window
             tauri::async_runtime::spawn(async move {
                 tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
                 let _ = window.show();
             });
         }
         Err(e) => {
-            error!("❌ 创建工具窗口失败: {}", e);
+            error!("❌ Failed to create tool window: {}", e);
         }
     }
 }
 
-// 处理工具栏菜单事件
+// Handle toolbar menu events
 pub fn handle_toolbar_menu_event<R: Runtime>(app: &AppHandle<R>, event_id: &str) {
     fn show_main_window<R: Runtime>(window: &tauri::WebviewWindow<R>) {
         let _ = window.unminimize();
@@ -149,7 +149,7 @@ pub fn handle_toolbar_menu_event<R: Runtime>(app: &AppHandle<R>, event_id: &str)
             Some(window)
         } else {
             if let Err(e) = windows::create_main_window(app) {
-                error!("❌ 创建主窗口失败: {}", e);
+                error!("❌ Failed to create main window: {}", e);
                 return None;
             }
             app.get_webview_window("main")
@@ -183,29 +183,29 @@ pub fn handle_toolbar_menu_event<R: Runtime>(app: &AppHandle<R>, event_id: &str)
     }
 }
 
-// 内部泛型函数，用于创建工具栏窗口
+// Internal generic function to create the toolbar window
 pub fn create_toolbar_window_internal<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     const TOOLBAR_WINDOW_ID: &str = "toolbar";
-    
-    // 检查工具栏窗口是否已存在
+
+    // Check whether the toolbar window already exists
     if app.get_webview_window(TOOLBAR_WINDOW_ID).is_some() {
-        debug!("🔧 工具栏窗口已存在");
+        debug!("🔧 Toolbar window already exists");
         return Ok(());
     }
-    
-    debug!("🔧 创建工具栏窗口");
-    
-    // 窗口大小和边距配置
-    let toolbar_size = 240.0;  // 窗口大小（紧凑布局：80px 图标 + 80px 气泡半径 × 2）
-    let margin = 20.0;         // 距离屏幕边缘的边距
-    
-    // 先创建窗口在默认位置
+
+    debug!("🔧 Creating toolbar window");
+
+    // Window size and margin
+    let toolbar_size = 240.0;  // Window size (compact layout: 80px icon + 80px bubble radius × 2)
+    let margin = 20.0;         // Margin from screen edge
+
+    // Create the window at the default position first
     let window = match tauri::WebviewWindowBuilder::new(
         app,
         TOOLBAR_WINDOW_ID,
         tauri::WebviewUrl::App("toolbar/index.html".into())
     )
-    .title("工具栏")
+    .title("Toolbar")
     .inner_size(toolbar_size, toolbar_size)
     .max_inner_size(toolbar_size, toolbar_size)
     .resizable(false)
@@ -216,21 +216,21 @@ pub fn create_toolbar_window_internal<R: Runtime>(app: &AppHandle<R>) -> Result<
     .shadow(false)
     .always_on_top(true)
     .skip_taskbar(true)
-    .visible(false)  // 先隐藏，等设置好位置再显示
+    .visible(false)  // Hide first; show after positioning
     .build()
     {
         Ok(win) => {
-            // 在生产环境禁用右键菜单
+            // Disable right-click menu in production
             windows::disable_context_menu(&win);
-            
-            // 开发模式下自动打开 DevTools
+
+            // Auto-open DevTools in debug
             #[cfg(debug_assertions)]
             {
                 win.open_devtools();
-                debug!("🔧 [开发模式] 已自动打开 DevTools");
+                debug!("🔧 [dev mode] DevTools auto-opened");
             }
-            
-            // 延迟 500ms 检查窗口尺寸（WebView2 初始化可能意外扩大窗口）
+
+            // After 500ms, verify the window size (WebView2 init may unexpectedly enlarge it)
             let win_check = win.clone();
             let target = toolbar_size;
             tauri::async_runtime::spawn(async move {
@@ -239,143 +239,143 @@ pub fn create_toolbar_window_internal<R: Runtime>(app: &AppHandle<R>) -> Result<
                     let sf = win_check.scale_factor().unwrap_or(1.0);
                     let expected_phys = (target * sf) as u32;
                     if size.width != expected_phys || size.height != expected_phys {
-                        warn!("⚠️ 窗口尺寸异常！期望 {}x{} 实际 {}x{}", expected_phys, expected_phys, size.width, size.height);
+                        warn!("⚠️ Unexpected window size! expected {}x{}, actual {}x{}", expected_phys, expected_phys, size.width, size.height);
                         let _ = win_check.set_size(tauri::Size::Physical(tauri::PhysicalSize::new(expected_phys, expected_phys)));
                     }
                 }
             });
-            
+
             win
         }
         Err(e) => {
-            error!("❌ 创建工具栏窗口失败: {}", e);
-            return Err(format!("创建工具栏窗口失败: {}", e));
+            error!("❌ Failed to create toolbar window: {}", e);
+            return Err(format!("Failed to create toolbar window: {}", e));
         }
     };
-    
-    // 尝试加载保存的位置，如果没有则使用默认位置（右下角）
+
+    // Try to load a saved position; if none, fall back to the default (bottom-right)
     if let Some((saved_x, saved_y)) = load_toolbar_position(app) {
-        // 保存的坐标已经是物理像素，需要验证是否在屏幕范围内
-        debug!("📂 读取保存的工具栏位置: ({}, {})", saved_x, saved_y);
-        
-        // 获取当前显示器信息进行边界检查
+        // The saved coordinates are in physical pixels; validate they are within the screen
+        debug!("📂 Read saved toolbar position: ({}, {})", saved_x, saved_y);
+
+        // Get current monitor info for bounds checking
         if let Ok(monitor) = window.current_monitor() {
             if let Some(monitor) = monitor {
                 let size = monitor.size();
                 let scale_factor = monitor.scale_factor();
-                
-                // 计算逻辑像素尺寸
+
+                // Logical pixel dimensions
                 let screen_width = size.width as f64 / scale_factor;
                 let screen_height = size.height as f64 / scale_factor;
-                
-                // 转换保存的物理坐标为逻辑坐标（用于边界检查）
+
+                // Convert saved physical coords to logical (for bounds checking)
                 let logical_x = saved_x / scale_factor;
                 let logical_y = saved_y / scale_factor;
-                
-                // 边界保护：确保工具栏至少有一部分可见
-                let min_visible = 50.0;  // 至少 50px 可见
+
+                // Bounds guard: make sure at least part of the toolbar is visible
+                let min_visible = 50.0;  // At least 50px visible
                 let max_x = screen_width - min_visible;
                 let max_y = screen_height - min_visible;
-                
-                // 检查是否越界
-                let is_out_of_bounds = 
+
+                // Check whether out of bounds
+                let is_out_of_bounds =
                     logical_x < -toolbar_size + min_visible ||
                     logical_y < -toolbar_size + min_visible ||
                     logical_x > max_x ||
                     logical_y > max_y;
-                
+
                 if is_out_of_bounds {
-                    warn!("⚠️  保存的位置越界，使用默认位置");
-                    debug!("   屏幕尺寸: {}x{}, 保存位置(逻辑): ({}, {})", 
+                    warn!("⚠️  Saved position is out of bounds — using default");
+                    debug!("   Screen size: {}x{}, saved position (logical): ({}, {})",
                              screen_width, screen_height, logical_x, logical_y);
-                    // 使用默认位置（右下角）
+                    // Use the default (bottom-right)
                     let x = screen_width - toolbar_size - margin - 60.0;
                     let y = screen_height - toolbar_size - margin - 80.0;
-                    
+
                     if let Err(e) = window.set_position(tauri::PhysicalPosition::new(
                         (x * scale_factor) as i32,
                         (y * scale_factor) as i32
                     )) {
-                        error!("❌ 设置默认位置失败: {}", e);
+                        error!("❌ Failed to set default position: {}", e);
                     }
                 } else {
-                    // 位置有效，直接使用
-                    debug!("✅ 位置有效，应用保存的位置");
+                    // Position is valid — use it
+                    debug!("✅ Position is valid — applying saved position");
                     if let Err(e) = window.set_position(tauri::PhysicalPosition::new(
                         saved_x as i32,
                         saved_y as i32
                     )) {
-                        error!("❌ 设置工具栏位置失败: {}", e);
+                        error!("❌ Failed to set toolbar position: {}", e);
                     }
                 }
             } else {
-                // 无法获取显示器信息，直接使用保存的位置
-                warn!("⚠️  无法获取显示器信息，直接使用保存的位置");
+                // Couldn't read monitor info — use saved position directly
+                warn!("⚠️  Could not read monitor info — using saved position directly");
                 if let Err(e) = window.set_position(tauri::PhysicalPosition::new(
                     saved_x as i32,
                     saved_y as i32
                 )) {
-                        error!("❌ 设置工具栏位置失败: {}", e);
+                        error!("❌ Failed to set toolbar position: {}", e);
                 }
             }
         } else {
-            // 无法获取显示器，直接使用保存的位置
-            warn!("⚠️  无法获取当前显示器，直接使用保存的位置");
+            // Couldn't get monitor — use saved position directly
+            warn!("⚠️  Could not get current monitor — using saved position directly");
             if let Err(e) = window.set_position(tauri::PhysicalPosition::new(
                 saved_x as i32,
                 saved_y as i32
             )) {
-                        error!("❌ 设置工具栏位置失败: {}", e);
+                        error!("❌ Failed to set toolbar position: {}", e);
             }
         }
     } else {
-        // 获取主显示器信息并计算右下角位置
+        // Get primary monitor info and compute bottom-right position
         if let Ok(monitor) = window.current_monitor() {
             if let Some(monitor) = monitor {
                 let size = monitor.size();
                 let scale_factor = monitor.scale_factor();
-                
-                // 计算逻辑像素尺寸
+
+                // Logical pixel dimensions
                 let screen_width = size.width as f64 / scale_factor;
                 let screen_height = size.height as f64 / scale_factor;
-                
-                // 计算右下角位置（考虑任务栏）
+
+                // Compute bottom-right position (account for taskbar)
                 let x = screen_width - toolbar_size - margin - 60.0;
                 let y = screen_height - toolbar_size - margin - 80.0;
-                
-                debug!("📍 屏幕尺寸: {}x{}, 缩放: {}, 默认工具栏位置: ({}, {})", 
+
+                debug!("📍 Screen size: {}x{}, scale: {}, default toolbar position: ({}, {})",
                          screen_width, screen_height, scale_factor, x, y);
-                
-                // 转换为物理坐标
+
+                // Convert to physical coords
                 if let Err(e) = window.set_position(tauri::PhysicalPosition::new(
                     (x * scale_factor) as i32,
                     (y * scale_factor) as i32
                 )) {
-                        error!("❌ 设置工具栏位置失败: {}", e);
+                        error!("❌ Failed to set toolbar position: {}", e);
                 }
             }
         }
     }
-    
-    // 显示窗口
+
+    // Show the window
     if let Err(e) = window.show() {
-        error!("❌ 显示工具栏窗口失败: {}", e);
+        error!("❌ Failed to show toolbar window: {}", e);
     }
-    
-    debug!("✅ 工具栏窗口创建成功");
+
+    debug!("✅ Toolbar window created");
     Ok(())
 }
 
-// Tauri 命令：创建工具栏窗口
+// Tauri command: create toolbar window
 #[tauri::command]
 pub async fn create_toolbar_window(app: AppHandle) -> Result<(), String> {
     create_toolbar_window_internal(&app)
 }
 
-// Tauri 命令：处理工具栏菜单操作
+// Tauri command: handle toolbar menu action
 #[tauri::command]
 pub async fn handle_toolbar_menu_action(app: AppHandle, action: String) -> Result<(), String> {
-    debug!("🔧 处理菜单操作: {}", action);
+    debug!("🔧 Handling menu action: {}", action);
     handle_toolbar_menu_event(&app, &action);
     Ok(())
 }

@@ -1,13 +1,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
-// 手柄按键映射 (Xbox 标准)
+// Gamepad button mapping (Xbox standard)
 const BUTTON = {
-  A: 0,        // 确认
-  B: 1,        // 返回
+  A: 0,        // Confirm
+  B: 1,        // Back
   X: 2,
   Y: 3,
-  LB: 4,       // 上一个标签/侧边栏上移
-  RB: 5,       // 下一个标签/侧边栏下移
+  LB: 4,       // Previous tab / sidebar up
+  RB: 5,       // Next tab / sidebar down
   LT: 6,
   RT: 7,
   BACK: 8,
@@ -28,8 +28,8 @@ const AXIS = {
 }
 
 const DEADZONE = 0.4
-const REPEAT_DELAY = 400    // 首次重复延迟 ms
-const REPEAT_INTERVAL = 120 // 后续重复间隔 ms
+const REPEAT_DELAY = 400    // Initial repeat delay in ms
+const REPEAT_INTERVAL = 120 // Repeat interval in ms
 
 export function useGamepad(options = {}) {
   const {
@@ -142,14 +142,14 @@ export function useGamepad(options = {}) {
     const gp = getGamepad()
     if (!gp) {
       gamepadConnected.value = false
-      // 无手柄时停止轮询，等待 gamepadconnected 事件唤醒
+      // When no gamepad is present, stop polling — wait for gamepadconnected to wake us up
       rafId = null
       return
     }
 
     gamepadConnected.value = true
 
-    // 按键处理
+    // Button handling
     for (let i = 0; i < gp.buttons.length; i++) {
       const pressed = isButtonPressed(gp, i)
       const wasPressed = prevButtons[i] || false
@@ -160,7 +160,7 @@ export function useGamepad(options = {}) {
       prevButtons[i] = pressed
     }
 
-    // 左摇杆
+    // Left stick
     if (gp.axes.length >= 2) {
       const lx = gp.axes[AXIS.LEFT_X]
       const ly = gp.axes[AXIS.LEFT_Y]
@@ -188,12 +188,12 @@ export function useGamepad(options = {}) {
     gamepadConnected.value = !!gp
     if (!gp) {
       gamepadActive.value = false
-      // 清除所有重复
+      // Clear all repeats
       Object.keys(repeatTimers).forEach(stopRepeat)
     }
   }
 
-  // 鼠标移动时退出手柄模式
+  // Exit gamepad mode when the mouse moves
   function onMouseMove() {
     if (gamepadActive.value) {
       gamepadActive.value = false
@@ -222,14 +222,14 @@ export function useGamepad(options = {}) {
 }
 
 /**
- * 焦点导航工具：在容器内的 focusable 元素间移动焦点
+ * Focus navigation helper: move focus between focusable elements inside a container
  */
 export function navigateFocus(direction, container) {
   const root = container || document
   const focusables = Array.from(root.querySelectorAll(
     '[data-focusable]:not([disabled]):not([data-focusable="false"]), .app-tile, .nav-item, .desktop-card.action-card, button:not([disabled]), a[href], input:not([disabled]), select:not([disabled])'
   )).filter(el => {
-    // 排除不可见元素
+    // Exclude invisible elements
     const rect = el.getBoundingClientRect()
     return rect.width > 0 && rect.height > 0
   })
@@ -240,7 +240,7 @@ export function navigateFocus(direction, container) {
   const currentIndex = focusables.indexOf(current)
 
   if (currentIndex === -1) {
-    // 没有当前焦点，选中第一个
+    // No current focus — select the first
     focusables[0].focus()
     return
   }
@@ -290,7 +290,7 @@ export function navigateFocus(direction, container) {
 
     if (!isValid) continue
 
-    // 优先选择主方向距离近的，交叉方向距离作为次要权重
+    // Prefer candidates close along the primary axis; cross-axis distance is secondary
     const score = primaryDist + crossDist * 2
     if (score < bestScore) {
       bestScore = score
@@ -300,13 +300,13 @@ export function navigateFocus(direction, container) {
 
   if (best) {
     best.focus()
-    // 确保滚动到可见
+    // Make sure it scrolls into view
     best.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
 }
 
 /**
- * 确认当前焦点元素（模拟点击）
+ * Confirm the currently focused element (simulate click)
  */
 export function confirmFocused() {
   const el = document.activeElement
