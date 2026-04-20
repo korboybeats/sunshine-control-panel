@@ -7,26 +7,23 @@ use tauri::{AppHandle, Manager, Emitter, Runtime};
 use log::{info, warn, error, debug};
 
 // ========== 常量定义 ==========
-const GITHUB_API_URL: &str = "https://api.github.com/repos/qiin2333/sunshine/releases";
-const GITHUB_API_URL_LATEST: &str = "https://api.github.com/repos/qiin2333/sunshine/releases/latest";
-const UPDATE_CHECK_INTERVAL: u64 = 4 * 60 * 60; // 4小时（秒）
+// English Edition: point at our wrapper releases instead of upstream Chinese.
+// Clicking "Download" in the GUI's update banner fetches our English wrapper
+// installer (which already auto-installs weekly via scheduled task anyway).
+const GITHUB_API_URL: &str = "https://api.github.com/repos/korboybeats/foundation-sunshine-english/releases";
+const GITHUB_API_URL_LATEST: &str = "https://api.github.com/repos/korboybeats/foundation-sunshine-english/releases/latest";
+const UPDATE_CHECK_INTERVAL: u64 = 4 * 60 * 60; // 4 hours (seconds)
 const HTTP_TIMEOUT_SECS: u64 = 3;
 const DOWNLOAD_TIMEOUT_SECS: u64 = 300;
 const MAX_RETRY_ATTEMPTS: usize = 4;
-const MAX_RELEASES_TO_CHECK: usize = 10; // 最多检查的发布数量
+const MAX_RELEASES_TO_CHECK: usize = 10;
 
-// GitHub API 加速代理列表（按优先级排序）
-const API_PROXY_PREFIXES: &[&str] = &[
-    "https://ghapi.hackhub.cn/",
-    "https://mirror.ghproxy.com/",
-];
-
-// GitHub 下载加速代理列表
-const DOWNLOAD_PROXY_PREFIXES: &[&str] = &[
-    "https://ghfast.top/",
-    "https://ghproxy.com/",
-    "https://mirror.ghproxy.com/",
-];
+// English Edition: empty proxy lists - the Chinese GitHub mirrors
+// (ghapi.hackhub.cn, ghproxy.com, mirror.ghproxy.com, ghfast.top) are
+// unreachable from outside China and just slow everything down with
+// failed requests. Hit GitHub directly.
+const API_PROXY_PREFIXES: &[&str] = &[];
+const DOWNLOAD_PROXY_PREFIXES: &[&str] = &[];
 
 // ========== 数据结构定义 ==========
 
