@@ -48,11 +48,11 @@ const checkLatestVersion = async () => {
     versionInfo.value.error = null
 
     // 获取最新稳定版
-    const latestResponse = await fetch('https://api.github.com/repos/qiin2333/Sunshine/releases/latest')
+    const latestResponse = await fetch('https://api.github.com/repos/korboybeats/foundation-sunshine-english/releases/latest')
     const latestRelease = await latestResponse.json()
 
     // 获取所有发布版本
-    const allReleasesResponse = await fetch('https://api.github.com/repos/qiin2333/Sunshine/releases')
+    const allReleasesResponse = await fetch('https://api.github.com/repos/korboybeats/foundation-sunshine-english/releases')
     const allReleases = await allReleasesResponse.json()
 
     // 查找预发布版本
@@ -60,7 +60,7 @@ const checkLatestVersion = async () => {
 
     versionInfo.value.latest = {
       version: latestRelease.tag_name,
-      downloadUrl: latestRelease.assets.find((asset) => asset.name.includes('sunshine-windows-installer.exe'))
+      downloadUrl: latestRelease.assets.find((asset) => asset.name.includes('Sunshine-EnglishEdition-Setup.exe'))
         ?.browser_download_url,
       releaseUrl: latestRelease.html_url,
       body: latestRelease.body,
@@ -69,7 +69,7 @@ const checkLatestVersion = async () => {
     if (preRelease) {
       versionInfo.value.preRelease = {
         version: preRelease.tag_name,
-        downloadUrl: preRelease.assets.find((asset) => asset.name.includes('sunshine-windows-installer.exe'))
+        downloadUrl: preRelease.assets.find((asset) => asset.name.includes('Sunshine-EnglishEdition-Setup.exe'))
           ?.browser_download_url,
         releaseUrl: preRelease.html_url,
         body: preRelease.body,
@@ -117,13 +117,13 @@ onMounted(() => {
   checkLatestVersion()
 })
 
-// 下载链接
+// Download links - English Edition wrapper releases
 const downloadLinks = ref({
   windows:
-    'https://ghfast.top/https://github.com/qiin2333/Sunshine/releases/download/foundation/sunshine-windows-installer.exe',
-  github: 'https://github.com/qiin2333/Sunshine-Foundation/releases/',
+    'https://github.com/korboybeats/foundation-sunshine-english/releases/latest/download/Sunshine-EnglishEdition-Setup.exe',
+  github: 'https://github.com/korboybeats/foundation-sunshine-english/releases/',
   mirror:
-    'https://ghfast.top/https://github.com/qiin2333/Sunshine/releases/download/foundation/sunshine-windows-installer.exe',
+    'https://github.com/korboybeats/foundation-sunshine-english/releases/latest/download/Sunshine-EnglishEdition-Setup.exe',
   latest: null,
 })
 
