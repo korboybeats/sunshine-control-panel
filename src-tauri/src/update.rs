@@ -70,8 +70,26 @@ pub struct UpdatePreferences {
 
 // ========== 版本相关 ==========
 
-/// 获取当前 Sunshine 版本
+/// Get the currently installed wrapper version.
+/// English Edition: prefer the wrapper's registry-recorded version
+/// (HKLM\SOFTWARE\SunshineEnglishEdition\Version) so we compare against
+/// the same kind of tag the API returns (e.g. "v2026.04.19-english"
+/// vs "v2026.04.19-english"). Falls back to sunshine.exe's FileVersion
+/// only if the registry key isn't present (non-wrapper installs).
 async fn get_current_sunshine_version() -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if let Ok(key) = hklm.open_subkey("SOFTWARE\\SunshineEnglishEdition") {
+            if let Ok(version) = key.get_value::<String, _>("Version") {
+                if !version.is_empty() && version != "unknown" {
+                    return Ok(version);
+                }
+            }
+        }
+    }
     use crate::sunshine;
     sunshine::get_sunshine_version().await
 }
