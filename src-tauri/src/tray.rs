@@ -153,9 +153,17 @@ pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         s.tooltip
     };
 
+    // Tray icon: use a dedicated sun-disc PNG instead of the swirl window
+    // icon. The swirl design's thin curves render as pixel-art at the 16x16
+    // size Windows uses for the system tray; the solid radial-gradient disc
+    // reads cleanly at any size while still matching the orange-yellow
+    // colour scheme of the rest of the app icons.
+    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+        .expect("Failed to load embedded tray icon PNG");
+
     TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(tray_icon)
         .tooltip(tooltip)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| handle_tray_menu_event(app, event.id().as_ref()))
