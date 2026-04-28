@@ -1,5 +1,5 @@
 use tauri::{
-    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu},
+    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager, Runtime,
 };
@@ -211,7 +211,6 @@ fn init_sunshine_user_mode_state<R: Runtime>(app: &AppHandle<R>) {
 /// Build the tray menu
 fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let s = get_tray_strings();
-    let current_locale = get_current_locale();
 
     let open_website = MenuItem::with_id(app, "open_website", s.open_website, true, None::<&str>)?;
     let vdd_settings = MenuItem::with_id(app, "vdd_settings", s.vdd_settings, true, None::<&str>)?;
@@ -227,11 +226,6 @@ fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let check_update = MenuItem::with_id(app, "check_update", s.check_update, true, None::<&str>)?;
     let about = MenuItem::with_id(app, "about", s.about, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", s.quit, true, None::<&str>)?;
-
-    // Language submenu (Chinese label "中文" intentional — it's the native name of the Chinese option)
-    let lang_zh = CheckMenuItem::with_id(app, "lang_zh", "中文", true, current_locale == "zh", None::<&str>)?;
-    let lang_en = CheckMenuItem::with_id(app, "lang_en", "English", true, current_locale == "en", None::<&str>)?;
-    let lang_submenu = Submenu::with_id_and_items(app, "language", s.language, true, &[&lang_zh, &lang_en])?;
 
     let separator1 = PredefinedMenuItem::separator(app)?;
     let separator2 = PredefinedMenuItem::separator(app)?;
@@ -274,7 +268,7 @@ fn build_tray_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     #[cfg(debug_assertions)]
     items.extend([&separator_debug as &dyn tauri::menu::IsMenuItem<R>, &debug_page]);
 
-    items.extend([&separator2 as &dyn tauri::menu::IsMenuItem<R>, &check_update, &about, &lang_submenu, &separator3, &quit]);
+    items.extend([&separator2 as &dyn tauri::menu::IsMenuItem<R>, &check_update, &about, &separator3, &quit]);
 
     Menu::with_items(app, &items)
 }
@@ -353,8 +347,6 @@ pub fn handle_tray_menu_event<R: Runtime>(app: &AppHandle<R>, menu_id: &str) {
             moonlight_web::cleanup();
             std::process::exit(0);
         }
-        "lang_zh" => switch_tray_locale(app, "zh"),
-        "lang_en" => switch_tray_locale(app, "en"),
         _ => warn!("⚠️ 未知的托盘菜单事件: {}", menu_id),
     }
 }
@@ -512,21 +504,6 @@ pub fn cleanup_prevent_sleep() {
             Ok(()) => info!("✅ 已清理防止睡眠状态"),
             Err(e) => error!("❌ 清理防止睡眠状态失败: {}", e),
         }
-    }
-}
-
-/// 从托盘菜单切换语言
-fn switch_tray_locale<R: Runtime>(app: &AppHandle<R>, locale: &str) {
-    info!("🌍 托盘菜单：切换语言为 {}", locale);
-    *CURRENT_LOCALE.lock().unwrap() = Some(locale.to_string());
-    rebuild_tray_menu(app);
-    // 通知前端同步语言
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.emit("tray-locale-changed", locale);
-    }
-    // 同时通知 desktop 窗口
-    if let Some(window) = app.get_webview_window("desktop") {
-        let _ = window.emit("tray-locale-changed", locale);
     }
 }
 

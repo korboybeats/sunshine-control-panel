@@ -4,8 +4,6 @@ import { createI18n } from 'vue-i18n'
 import en from './locales/en.js'
 import en_GB from './locales/en_GB.js'
 import en_US from './locales/en_US.js'
-import zh from './locales/zh.js'
-import zh_TW from './locales/zh_TW.js'
 import de from './locales/de.js'
 import fr from './locales/fr.js'
 import es from './locales/es.js'
@@ -27,8 +25,6 @@ export const supportedLocales = [
   { code: 'en', name: 'English' },
   { code: 'en_GB', name: 'English (UK)' },
   { code: 'en_US', name: 'English (US)' },
-  { code: 'zh', name: '简体中文' },
-  { code: 'zh_TW', name: '繁體中文' },
   { code: 'de', name: 'Deutsch' },
   { code: 'fr', name: 'Français' },
   { code: 'es', name: 'Español' },
@@ -55,8 +51,6 @@ export const i18n = createI18n({
     en,
     en_GB,
     en_US,
-    zh,
-    zh_TW,
     de,
     fr,
     es,

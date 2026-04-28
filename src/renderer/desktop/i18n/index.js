@@ -1,8 +1,7 @@
 import { ref, computed } from 'vue'
-import { zh } from './zh.js'
 import { en } from './en.js'
 
-const messages = { zh, en }
+const messages = { en }
 
 const currentLocale = ref(localStorage.getItem('language') || 'en')
 
