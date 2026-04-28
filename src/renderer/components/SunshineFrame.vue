@@ -6,7 +6,7 @@
           <div class="loading-container">
             <img src="../public/gura-pix.png" class="loading-image" alt="Loading" />
             <div class="loading-text">
-              <p>正在准备 {{ currentPath }} ...</p>
+              <p>Preparing {{ currentPath }} ...</p>
             </div>
           </div>
         </div>
