@@ -167,7 +167,6 @@ import { useWindowControls } from '../composables/useWindowControls.js'
 import { useTools } from '../composables/useTools.js'
 import { ROUTES } from '../composables/useRouter.js'
 import { useI18n } from '../desktop/i18n/index.js'
-import IconLang from '../desktop/icons/IconLang.vue'
 import {
   Monitor,
   Delete,
@@ -191,7 +190,7 @@ import {
 
 const emit = defineEmits(['route-change'])
 
-const { t, locale, toggleLocale } = useI18n()
+const { t } = useI18n()
 
 // Composables
 const {
@@ -263,7 +262,6 @@ const toolsMenuItems = computed(() => [
 const footerMenuItems = computed(() => {
   const items = [
     { icon: isDark.value ? Sunny : Moon, label: isDark.value ? t.value.sidebar.lightMode : t.value.sidebar.darkMode, action: toggleTheme },
-    { icon: IconLang, label: locale.value === 'zh' ? 'EN' : '中文', action: toggleLocale },
     { icon: Minus, label: t.value.sidebar.minimize, action: minimizeWindow },
     { icon: Close, label: t.value.sidebar.hideWindow, action: closeWindow, class: 'danger' },
   ]
