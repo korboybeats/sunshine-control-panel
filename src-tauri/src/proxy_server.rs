@@ -122,7 +122,7 @@ pub async fn start_proxy_server() -> Result<(), Box<dyn std::error::Error + Send
         Some(l) => l,
         None => {
             error!("❌ 代理服务器绑定端口失败: 端口 {}-{} 均被占用", PROXY_PORT_START, PROXY_PORT_END);
-            return Err(format!("无法绑定端口 {}-{}", PROXY_PORT_START, PROXY_PORT_END).into());
+            return Err(format!("Could not bind to ports {}-{}", PROXY_PORT_START, PROXY_PORT_END).into());
         }
     };
     
@@ -308,7 +308,7 @@ async fn proxy_handler(req: Request) -> Response {
         Ok(bytes) => bytes.to_vec(),
         Err(e) => {
             error!("❌ 读取请求体失败: {}", e);
-            return (axum::http::StatusCode::BAD_REQUEST, "读取请求体失败").into_response();
+            return (axum::http::StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
         }
     };
     
@@ -370,7 +370,7 @@ async fn proxy_handler(req: Request) -> Response {
                         format!(r#"{{"success":false,"error":"Proxy error: {}"}}"#, e)
                     ).into_response()
                 } else {
-                    (axum::http::StatusCode::BAD_GATEWAY, format!("代理错误: {}", e)).into_response()
+                    (axum::http::StatusCode::BAD_GATEWAY, format!("Proxy error: {}", e)).into_response()
                 }
             }
         }
@@ -390,7 +390,7 @@ async fn handle_steam_api(
         Ok(bytes) => bytes.to_vec(),
         Err(e) => {
             error!("❌ 读取请求体失败: {}", e);
-            return (axum::http::StatusCode::BAD_REQUEST, "读取请求体失败").into_response();
+            return (axum::http::StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
         }
     };
     
@@ -451,7 +451,7 @@ async fn build_cors_response(response: reqwest::Response) -> Response {
                 .header("Access-Control-Allow-Headers", "*")
                 .body(axum::body::Body::from(body_bytes.to_vec()))
                 .unwrap_or_else(|_| {
-                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "构建响应失败").into_response()
+                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to build response").into_response()
                 })
         }
         Err(e) => {
@@ -515,7 +515,7 @@ async fn handle_external_proxy(
         Ok(bytes) => bytes.to_vec(),
         Err(e) => {
             error!("❌ 读取请求体失败: {}", e);
-            return (axum::http::StatusCode::BAD_REQUEST, "读取请求体失败").into_response();
+            return (axum::http::StatusCode::BAD_REQUEST, "Failed to read request body").into_response();
         }
     };
     
@@ -549,7 +549,7 @@ async fn handle_external_proxy(
                     
                     builder.body(axum::body::Body::from(body.to_vec()))
                         .unwrap_or_else(|_| {
-                            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "构建响应失败").into_response()
+                            (axum::http::StatusCode::INTERNAL_SERVER_ERROR, "Failed to build response").into_response()
                         })
                 }
                 Err(e) => {

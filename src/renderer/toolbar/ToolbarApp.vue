@@ -132,23 +132,23 @@ const setCacheEntry = async (key, data, etag) => {
 
 // 默认话术（fallback）
 const defaultPhrases = [
-  '杂鱼～杂鱼～',
-  '串流画质又调低了？杂鱼～',
-  '码率不够高哦，杂鱼看得清吗♡',
-  '延迟这么高，杂鱼在干什么呢～',
-  '帧率掉了吧？杂鱼的网络不太行呢',
-  '虚拟显示器开着呢，杂鱼想看什么？',
-  '嘿嘿，杂鱼又在偷偷串流了～',
-  'DPI调那么高，杂鱼眼睛受得了吗♡',
-  '连接不稳定哦，杂鱼要检查网络啦～',
-  '串流质量还不错嘛，杂鱼今天很乖♡',
-  '又在调码率了？杂鱼真是麻烦呢～',
-  '分辨率调这么低，杂鱼是想省流量吗',
-  '串流开这么久，杂鱼不累吗？',
-  '网络波动了哦，杂鱼要注意啦♡',
-  '画面卡顿了吧？杂鱼就是杂鱼～',
-  '音频延迟了呢，杂鱼听得清吗♡',
-  '串流设置改来改去，杂鱼真挑剔～',
+  'Hey there, loser~',
+  'Cranking the stream quality down again? What a loser~',
+  'Bitrate is way too low, can you even see anything? ♡',
+  'Latency this high, what are you even doing~',
+  'Frame drops? Your network really is hopeless',
+  'Virtual display is on, what are you trying to watch?',
+  'Heehee, sneaking in another stream session, are we?',
+  'DPI cranked that high, can your eyes handle it? ♡',
+  'Connection is flaky, you should check your network~',
+  'Stream quality is actually decent today, good job ♡',
+  'Tweaking the bitrate again? Such a pain~',
+  'Resolution this low, trying to save bandwidth or what?',
+  'Streaming this long, aren\'t you tired?',
+  'Network is jittering, watch out ♡',
+  'Frame stutters? Yep, classic loser behavior~',
+  'Audio is lagging, can you even hear it? ♡',
+  'Constantly tweaking stream settings, so picky~',
 ]
 
 // 响应式话术列表
@@ -194,15 +194,15 @@ const showSpeech = () => {
 
 // ===== Vision 桌面观察 =====
 
-const VISION_PROMPT = `你是一个可爱但毒舌的桌面宠物"米塔"。你正在偷看用户的电脑屏幕。
-根据截图内容，假定用户正在做某件事，然后调戏用户。不要用"你是不是在..."这种猜测句式，而是直接断言"你又在..."来调侃。
-15-40字，雌小鬼风格，常用口癖：杂鱼♡、哼、切、笨蛋。
-示例风格：
-- 看到游戏→"又在打游戏偷懒了♡ 杂鱼的操作真是一言难尽呢～"
-- 看到代码→"写了半天bug又多了吧，杂鱼程序员～"
-- 看到摸鱼→"上班时间逛这个，被老板看到可就惨了呢♡"
-- 看到聊天→"跟谁聊得这么开心？哼，才不在意呢"
-只输出一句话，不要解释。用中文回复。`
+const VISION_PROMPT = `You're a cute but sharp-tongued desktop pet named "Mita". You're sneaking a peek at the user's screen.
+Based on the screenshot, assume the user is doing some specific thing, then tease them. Don't use guessing phrasing like "Are you...?", instead assert directly: "You're sneaking off to..." to mock them.
+Keep it 15-40 words, bratty little gremlin style, common verbal tics: loser ♡, tch, hmph, dummy.
+Example style:
+- See a game → "Slacking off with a game again ♡ Your loser-tier mechanics are honestly tragic~"
+- See code → "Coding all day and just adding more bugs, eh, loser dev~"
+- See goofing off → "Browsing this on work hours? If your boss sees you you're toast ♡"
+- See chat → "Who are you chatting with so happily? Hmph, not that I care."
+Output one sentence only, no explanation. Reply in English.`
 
 let visionCounter = 0
 
@@ -225,7 +225,7 @@ const tryVisionSpeech = async () => {
 
   try {
     const screenshot = await invoke('capture_screenshot')
-    const response = await callVisionLLM(config, VISION_PROMPT, '看看我的桌面，说点什么吧', screenshot, 150)
+    const response = await callVisionLLM(config, VISION_PROMPT, 'Take a look at my desktop and say something', screenshot, 150)
     if (response && response.trim()) {
       speechText.value = response.trim()
       speechVisible.value = true

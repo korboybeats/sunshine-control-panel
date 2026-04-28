@@ -99,7 +99,7 @@ pub async fn get_gpus() -> Result<Vec<String>, String> {
 
     #[cfg(not(target_os = "windows"))]
     {
-        Ok(vec!["未知 GPU".to_string()])
+        Ok(vec!["Unknown GPU".to_string()])
     }
 }
 
@@ -180,7 +180,7 @@ async fn get_windows_system_info() -> Result<(String, u64, String), String> {
         .map_err(|e| e.to_string())?;
     
     let os_info = os_results.first()
-        .ok_or("无法获取操作系统信息")?;
+        .ok_or("Could not get operating system info")?;
     
     let os_version = os_info.caption.clone();
     let memory_bytes = os_info.total_visible_memory_size
@@ -270,17 +270,17 @@ pub async fn set_desktop_dpi(dpi: u32) -> Result<(), String> {
                 }
                 Err(e) => {
                     error!("❌ 执行 SetDpi.exe 失败: {}", e);
-                    Err(format!("执行失败: {}", e))
+                    Err(format!("Execution failed: {}", e))
                 }
             }
         } else {
-            Err(format!("找不到 SetDpi.exe: {:?}", setdpi_path))
+            Err(format!("Could not find SetDpi.exe: {:?}", setdpi_path))
         }
     }
     
     #[cfg(not(target_os = "windows"))]
     {
-        Err("DPI 调整功能仅在 Windows 上可用".to_string())
+        Err("DPI adjustment is only available on Windows".to_string())
     }
 }
 
@@ -458,7 +458,7 @@ fn get_system_memory_status() -> Result<(u64, u64), String> {
             info.free_physical_memory.unwrap_or(0) * 1024,
         ))
     } else {
-        Err("无法获取系统内存信息".to_string())
+        Err("Could not get system memory info".to_string())
     }
 }
 

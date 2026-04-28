@@ -16,7 +16,7 @@
       <div class="card-content">
         <div class="setting-item">
           <div class="setting-info">
-            <div class="setting-name">主题编辑器</div>
+            <div class="setting-name">{{ t.settings.themeEditor }}</div>
             <div class="setting-desc">{{ t.settings.appearanceDesc }}</div>
           </div>
           <div class="setting-control">

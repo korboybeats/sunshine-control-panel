@@ -127,7 +127,7 @@ mod win {
                     FILE_MAP_READ.0 | FILE_MAP_WRITE.0,
                     false,
                     PCSTR(name.as_ptr() as *const u8),
-                ).map_err(|e| format!("无法打开 RTSS 共享内存: {} (RTSS 可能未运行)", e))?;
+                ).map_err(|e| format!("Could not open RTSS shared memory: {} (RTSS may not be running)", e))?;
 
                 let view = MapViewOfFile(
                     handle,
@@ -139,7 +139,7 @@ mod win {
 
                 if view.Value.is_null() {
                     let _ = CloseHandle(handle);
-                    return Err("映射 RTSS 共享内存失败".to_string());
+                    return Err("Failed to map RTSS shared memory".to_string());
                 }
 
                 Ok(Self { ptr: view.Value, handle })
@@ -212,13 +212,13 @@ fn run_rtss_cli(args: &[&str]) -> Result<String, String> {
         .args(args)
         .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .output()
-        .map_err(|e| format!("执行 rtss-cli 失败: {}", e))?;
+        .map_err(|e| format!("Failed to run rtss-cli: {}", e))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        return Err(format!("rtss-cli 错误: {} {}", stdout, stderr));
+        return Err(format!("rtss-cli error: {} {}", stdout, stderr));
     }
 
     Ok(stdout)
@@ -227,11 +227,11 @@ fn run_rtss_cli(args: &[&str]) -> Result<String, String> {
 /// 获取 rtss-cli.exe 完整路径
 fn get_rtss_cli_path() -> Result<std::path::PathBuf, String> {
     let install_dir = detect_rtss_install_dir()
-        .ok_or("未检测到 RTSS 安装路径")?;
+        .ok_or("RTSS install path not detected")?;
     let cli_path = std::path::Path::new(&install_dir).join("rtss-cli.exe");
     if !cli_path.exists() {
         return Err(format!(
-            "未找到 rtss-cli.exe，请下载并放入 RTSS 安装目录: {}",
+            "rtss-cli.exe not found. Download it and place it in the RTSS install directory: {}",
             install_dir
         ));
     }
@@ -242,10 +242,10 @@ fn get_rtss_cli_path() -> Result<std::path::PathBuf, String> {
 #[cfg(target_os = "windows")]
 fn get_rtss_profile_path(profile: &str) -> Result<std::path::PathBuf, String> {
     let install_dir = detect_rtss_install_dir()
-        .ok_or("未检测到 RTSS 安装路径")?;
+        .ok_or("RTSS install path not detected")?;
     let path = std::path::Path::new(&install_dir).join("Profiles").join(profile);
     if !path.exists() {
-        return Err(format!("RTSS profile 不存在: {}", path.display()));
+        return Err(format!("RTSS profile not found: {}", path.display()));
     }
     Ok(path)
 }
@@ -254,7 +254,7 @@ fn get_rtss_profile_path(profile: &str) -> Result<std::path::PathBuf, String> {
 #[cfg(target_os = "windows")]
 fn get_ini_value(path: &std::path::Path, section: &str, key: &str) -> Result<String, String> {
     let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("读取 profile 失败: {}", e))?;
+        .map_err(|e| format!("Failed to read profile: {}", e))?;
 
     let section_header = format!("[{}]", section);
     let mut in_section = false;
@@ -275,14 +275,14 @@ fn get_ini_value(path: &std::path::Path, section: &str, key: &str) -> Result<Str
         }
     }
 
-    Err(format!("在 [{}] 中未找到 {} 键", section, key))
+    Err(format!("Key {} not found in [{}]", key, section))
 }
 
 /// 修改 INI 文件中的值（支持 section）
 #[cfg(target_os = "windows")]
 fn set_ini_value(path: &std::path::Path, section: &str, key: &str, value: &str) -> Result<(), String> {
     let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("读取 profile 失败: {}", e))?;
+        .map_err(|e| format!("Failed to read profile: {}", e))?;
 
     let section_header = format!("[{}]", section);
     let mut lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
@@ -324,7 +324,7 @@ fn set_ini_value(path: &std::path::Path, section: &str, key: &str, value: &str) 
             info!("🎯 普通权限写入失败, 尝试管理员权限...");
             let tmp = std::env::temp_dir().join("rtss_profile_tmp");
             std::fs::write(&tmp, &new_content)
-                .map_err(|e| format!("写入临时文件失败: {}", e))?;
+                .map_err(|e| format!("Failed to write temp file: {}", e))?;
 
             let ps_cmd = format!(
                 "Copy-Item -Path '{}' -Destination '{}' -Force",
@@ -336,7 +336,7 @@ fn set_ini_value(path: &std::path::Path, section: &str, key: &str, value: &str) 
                     ps_cmd.replace('\'', "''")
                 )])
                 .output()
-                .map_err(|e| format!("提权写入失败: {}", e))?;
+                .map_err(|e| format!("Elevated write failed: {}", e))?;
 
             let _ = std::fs::remove_file(&tmp);
 
@@ -344,7 +344,7 @@ fn set_ini_value(path: &std::path::Path, section: &str, key: &str, value: &str) 
                 info!("🎯 RTSS profile 管理员权限更新成功");
                 Ok(())
             } else {
-                Err("写入 RTSS profile 失败: 需要管理员权限".to_string())
+                Err("Failed to write RTSS profile: administrator privileges required".to_string())
             }
         }
     }
@@ -386,7 +386,7 @@ fn run_rtss_cli_elevated(args: &[&str]) -> Result<String, String> {
         );
         let code = result.0 as usize;
         if code <= 32 {
-            return Err(format!("管理员权限执行失败 (code={})", code));
+            return Err(format!("Elevated execution failed (code={})", code));
         }
     }
 
@@ -412,7 +412,7 @@ fn run_rtss_cli_elevated(args: &[&str]) -> Result<String, String> {
         }
     }
 
-    Err("管理员权限执行超时".to_string())
+    Err("Elevated execution timed out".to_string())
 }
 
 // ─── Tauri 命令 ────────────────────────────────────────────
@@ -486,7 +486,7 @@ pub async fn rtss_set_osd(text: String, owner: Option<String>) -> Result<(), Str
             let header = &*(shm.ptr as *const RtssSharedMemoryHeader);
 
             if header.dwSignature != RTSS_SHARED_MEMORY_SIGNATURE {
-                return Err("RTSS 共享内存签名不匹配".to_string());
+                return Err("RTSS shared memory signature mismatch".to_string());
             }
 
             let osd_arr_base = (shm.ptr as *mut u8).add(header.dwOSDArrOffset as usize);
@@ -502,7 +502,7 @@ pub async fn rtss_set_osd(text: String, owner: Option<String>) -> Result<(), Str
             );
 
             if osd_count == 0 {
-                return Err("RTSS OSD 槽位数量为 0".to_string());
+                return Err("RTSS OSD slot count is 0".to_string());
             }
 
             let owner_cstr = CString::new(owner_name.as_str()).unwrap();
@@ -550,7 +550,7 @@ pub async fn rtss_set_osd(text: String, owner: Option<String>) -> Result<(), Str
                 .or(dead_process_slot)
                 .ok_or_else(|| {
                     format!(
-                        "没有可用的 RTSS OSD 槽位（共 {} 个槽位均被占用）",
+                        "No available RTSS OSD slots (all {} slots are in use)",
                         osd_count
                     )
                 })?;
@@ -580,7 +580,7 @@ pub async fn rtss_set_osd(text: String, owner: Option<String>) -> Result<(), Str
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -635,13 +635,13 @@ pub async fn rtss_set_framerate_limit(fps: i32, profile: Option<String>) -> Resu
         if actual2 == fps {
             Ok("OK".to_string())
         } else {
-            Err(format!("帧率限制设置失败: 需要管理员权限 (期望={}, 实际={})", fps, actual2))
+            Err(format!("Failed to set framerate limit: administrator privileges required (expected={}, actual={})", fps, actual2))
         }
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -662,12 +662,12 @@ pub async fn rtss_get_framerate_limit(profile: Option<String>) -> Result<i32, St
 
         let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
         let stdout = run_rtss_cli(&arg_refs)?;
-        stdout.parse::<i32>().map_err(|_| format!("无法解析帧率值: '{}'", stdout))
+        stdout.parse::<i32>().map_err(|_| format!("Could not parse framerate value: '{}'", stdout))
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -713,7 +713,7 @@ pub async fn rtss_toggle_limiter() -> Result<String, String> {
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -723,12 +723,12 @@ pub async fn rtss_get_limiter_status() -> Result<i32, String> {
     #[cfg(target_os = "windows")]
     {
         let stdout = run_rtss_cli(&["limiter:get"])?;
-        stdout.parse::<i32>().map_err(|_| format!("无法解析限制器状态: '{}'", stdout))
+        stdout.parse::<i32>().map_err(|_| format!("Could not parse limiter status: '{}'", stdout))
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -770,7 +770,7 @@ pub async fn rtss_toggle_overlay() -> Result<String, String> {
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -789,11 +789,11 @@ pub async fn rtss_download_cli() -> Result<String, String> {
         use windows::Win32::UI::WindowsAndMessaging::SW_HIDE;
 
         let install_dir =
-            detect_rtss_install_dir().ok_or("未检测到 RTSS 安装路径，请先安装 RTSS")?;
+            detect_rtss_install_dir().ok_or("RTSS install path not detected. Please install RTSS first.")?;
 
         let dest = std::path::Path::new(&install_dir).join("rtss-cli.exe");
         if dest.exists() {
-            return Ok(format!("rtss-cli.exe 已存在: {}", dest.display()));
+            return Ok(format!("rtss-cli.exe already exists: {}", dest.display()));
         }
 
         info!("🎯 正在从 GitHub 下载 rtss-cli.exe ...");
@@ -802,16 +802,16 @@ pub async fn rtss_download_cli() -> Result<String, String> {
         let client = reqwest::Client::builder()
             .user_agent("Sunshine-Control-Panel")
             .build()
-            .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
+            .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
         let release: serde_json::Value = client
             .get(RTSS_CLI_GITHUB_API)
             .send()
             .await
-            .map_err(|e| format!("请求 GitHub API 失败: {}", e))?
+            .map_err(|e| format!("GitHub API request failed: {}", e))?
             .json()
             .await
-            .map_err(|e| format!("解析 GitHub 响应失败: {}", e))?;
+            .map_err(|e| format!("Failed to parse GitHub response: {}", e))?;
 
         let download_url = release["assets"]
             .as_array()
@@ -823,7 +823,7 @@ pub async fn rtss_download_cli() -> Result<String, String> {
                 })
             })
             .and_then(|a| a["browser_download_url"].as_str())
-            .ok_or("未在 GitHub Release 中找到 rtss-cli.exe 资产")?
+            .ok_or("rtss-cli.exe asset not found in GitHub release")?
             .to_string();
 
         // 2. 下载到临时文件
@@ -831,13 +831,13 @@ pub async fn rtss_download_cli() -> Result<String, String> {
             .get(&download_url)
             .send()
             .await
-            .map_err(|e| format!("下载 rtss-cli.exe 失败: {}", e))?
+            .map_err(|e| format!("Failed to download rtss-cli.exe: {}", e))?
             .bytes()
             .await
-            .map_err(|e| format!("读取下载内容失败: {}", e))?;
+            .map_err(|e| format!("Failed to read downloaded content: {}", e))?;
 
         if bytes.len() < 1024 {
-            return Err("下载的文件太小，可能不是有效的可执行文件".into());
+            return Err("Downloaded file is too small; it may not be a valid executable".into());
         }
 
         // 3. 先尝试直接写入
@@ -850,7 +850,7 @@ pub async fn rtss_download_cli() -> Result<String, String> {
         let temp_dir = std::env::temp_dir();
         let temp_path = temp_dir.join("rtss-cli.exe");
         std::fs::write(&temp_path, &bytes)
-            .map_err(|e| format!("写入临时文件失败: {}", e))?;
+            .map_err(|e| format!("Failed to write temp file: {}", e))?;
 
         // 用 cmd /c copy 以管理员权限复制
         let params = format!(
@@ -877,7 +877,7 @@ pub async fn rtss_download_cli() -> Result<String, String> {
         if hinstance_val <= 32 {
             // 清理临时文件
             let _ = std::fs::remove_file(&temp_path);
-            return Err("用户取消了管理员权限请求，或提权失败".into());
+            return Err("User cancelled the elevation request, or elevation failed".into());
         }
 
         // 等待文件出现（提权命令是异步的）
@@ -891,12 +891,12 @@ pub async fn rtss_download_cli() -> Result<String, String> {
         }
 
         let _ = std::fs::remove_file(&temp_path);
-        Err("提权复制超时，请手动复制 rtss-cli.exe 到 RTSS 目录".into())
+        Err("Elevated copy timed out. Please copy rtss-cli.exe to the RTSS directory manually.".into())
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -1407,7 +1407,7 @@ pub async fn rtss_get_osd_properties(profile: Option<String>) -> Result<OsdPrope
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }
 
@@ -1445,7 +1445,7 @@ pub async fn rtss_set_osd_property(
             if actual2.trim() == target.as_str() {
                 return Ok("OK".to_string());
             }
-            return Err(format!("OSD 设置失败: 期望={}, 实际={}", target, actual2.trim()));
+            return Err(format!("Failed to set OSD: expected={}, actual={}", target, actual2.trim()));
         }
 
         // 其他属性通过修改 profile 文件实现
@@ -1455,7 +1455,7 @@ pub async fn rtss_set_osd_property(
             "OnScreenDisplayY" => ("OSD", "PositionY"),
             "OnScreenDisplayZoom" => ("OSD", "ZoomRatio"),
             "OSDCoordinateSpace" => ("OSD", "CoordinateSpace"),
-            _ => return Err(format!("未知的 OSD 属性: {}", key)),
+            _ => return Err(format!("Unknown OSD property: {}", key)),
         };
 
         let profile_path = get_rtss_profile_path(&prof)?;
@@ -1466,6 +1466,6 @@ pub async fn rtss_set_osd_property(
 
     #[cfg(not(target_os = "windows"))]
     {
-        Err("RTSS 仅在 Windows 上可用".to_string())
+        Err("RTSS is only available on Windows".to_string())
     }
 }

@@ -14,10 +14,10 @@ async fn update_vdd_xml_extra_fields(settings: &VddSettings) -> Result<(), Strin
     // 读取现有 XML（如果存在）
     let mut vdd_settings = if vdd_xml_path.exists() {
         let content = fs::read_to_string(&vdd_xml_path)
-            .map_err(|e| format!("读取 VDD XML 失败: {}", e))?;
-        
+            .map_err(|e| format!("Failed to read VDD XML: {}", e))?;
+
         from_str::<VddSettings>(&content)
-            .map_err(|e| format!("解析 VDD XML 失败: {}", e))?
+            .map_err(|e| format!("Failed to parse VDD XML: {}", e))?
     } else {
         // 如果文件不存在，使用默认配置
         debug!("  📄 VDD 配置文件不存在，使用默认配置");
@@ -43,7 +43,7 @@ async fn update_vdd_xml_extra_fields(settings: &VddSettings) -> Result<(), Strin
     
     // 序列化回 XML
     let xml = to_string(&vdd_settings)
-        .map_err(|e| format!("序列化 VDD XML 失败: {}", e))?;
+        .map_err(|e| format!("Failed to serialize VDD XML: {}", e))?;
     
     // 添加 XML 声明
     let full_xml = format!("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n{}", xml);
@@ -66,8 +66,8 @@ async fn write_vdd_xml(vdd_xml_path: &PathBuf, content: &str) -> Result<(), Stri
     let temp_path = std::env::temp_dir().join(format!("vdd_extra_{}.xml", std::process::id()));
     debug!("  📝 写入临时文件: {:?}", temp_path);
     fs::write(&temp_path, content)
-        .map_err(|e| format!("写入临时文件失败: {}", e))?;
-    
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
+
     debug!("  📝 目标文件: {:?}", vdd_xml_path);
     
     // 先尝试使用 ShellExecuteW 触发 UAC 并复制
@@ -119,13 +119,13 @@ async fn write_vdd_xml(vdd_xml_path: &PathBuf, content: &str) -> Result<(), Stri
             .map_err(|e| {
                 // 清理临时文件
                 let _ = fs::remove_file(&temp_path);
-                format!("执行 PowerShell 命令失败: {}", e)
+                format!("Failed to run PowerShell command: {}", e)
             })?
             .wait()
             .map_err(|e| {
                 // 清理临时文件
                 let _ = fs::remove_file(&temp_path);
-                format!("等待 PowerShell 命令完成失败: {}", e)
+                format!("Failed waiting for PowerShell command to finish: {}", e)
             })?;
         
         // 等待文件写入完成
@@ -142,7 +142,7 @@ async fn write_vdd_xml(vdd_xml_path: &PathBuf, content: &str) -> Result<(), Stri
                 .map_err(|e| {
                     // 清理临时文件
                     let _ = fs::remove_file(&temp_path);
-                    format!("写入失败，需要管理员权限: {}", e)
+                    format!("Write failed; administrator privileges required: {}", e)
                 })?;
             info!("  ✓ 直接写入成功");
         } else {
@@ -172,7 +172,7 @@ fn elevated_copy_with_shell_execute(source: &Path, destination: &Path) -> Result
     let cmd_path: PathBuf = Path::new(&system_root).join("System32").join("cmd.exe");
     
     if !cmd_path.exists() {
-        return Err(format!("找不到 cmd.exe: {:?}", cmd_path));
+        return Err(format!("Could not find cmd.exe: {:?}", cmd_path));
     }
     
     let parameters = format!(
@@ -196,7 +196,7 @@ fn elevated_copy_with_shell_execute(source: &Path, destination: &Path) -> Result
         );
         
         if result.0 as isize <= 32 {
-            return Err(format!("ShellExecuteW 返回错误码 {}", result.0 as isize));
+            return Err(format!("ShellExecuteW returned error code {}", result.0 as isize));
         }
     }
     
@@ -209,11 +209,11 @@ async fn write_vdd_xml(vdd_xml_path: &PathBuf, content: &str) -> Result<(), Stri
     // 确保目录存在
     if let Some(parent) = vdd_xml_path.parent() {
         fs::create_dir_all(parent)
-            .map_err(|e| format!("创建目录失败: {}", e))?;
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
     }
-    
+
     fs::write(vdd_xml_path, content)
-        .map_err(|e| format!("写入 VDD XML 失败: {}", e))?;
+        .map_err(|e| format!("Failed to write VDD XML: {}", e))?;
     
     debug!("  ✓ 已写入 colour 和 logging 到 XML");
     
@@ -223,11 +223,11 @@ async fn write_vdd_xml(vdd_xml_path: &PathBuf, content: &str) -> Result<(), Stri
 /// 验证 VDD XML 文件
 fn verify_vdd_xml(vdd_xml_path: &PathBuf) -> Result<(), String> {
     if !vdd_xml_path.exists() {
-        return Err("验证失败: 文件不存在".to_string());
+        return Err("Verification failed: file does not exist".to_string());
     }
-    
+
     let verify_content = fs::read_to_string(vdd_xml_path)
-        .map_err(|e| format!("验证文件失败: {}", e))?;
+        .map_err(|e| format!("Failed to verify file: {}", e))?;
     
     if verify_content.contains("<colour>") || verify_content.contains("<logging>") {
         debug!("  ✅ 验证: colour/logging 字段已写入");
@@ -252,7 +252,7 @@ pub async fn read_full_sunshine_config() -> Result<serde_json::Map<String, serde
     }
     
     let content = fs::read_to_string(&config_path)
-        .map_err(|e| format!("读取 sunshine.conf 失败: {}", e))?;
+        .map_err(|e| format!("Failed to read sunshine.conf: {}", e))?;
     
     let lines: Vec<&str> = content.lines().collect();
     let mut i = 0;
@@ -434,11 +434,11 @@ fn get_vdd_base_path() -> Result<PathBuf, String> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let vdd_key = hklm
         .open_subkey(r"SOFTWARE\ZakoTech\ZakoDisplayAdapter")
-        .map_err(|e| format!("无法打开注册表项: {}", e))?;
-    
+        .map_err(|e| format!("Could not open registry key: {}", e))?;
+
     let vdd_path: String = vdd_key
         .get_value("VDDPATH")
-        .map_err(|e| format!("无法读取 VDDPATH: {}", e))?;
+        .map_err(|e| format!("Could not read VDDPATH: {}", e))?;
     
     Ok(PathBuf::from(vdd_path))
 }
@@ -446,7 +446,7 @@ fn get_vdd_base_path() -> Result<PathBuf, String> {
 /// 从注册表读取 VDD 设置目录路径（非 Windows 平台回退）
 #[cfg(not(target_os = "windows"))]
 fn get_vdd_base_path() -> Result<PathBuf, String> {
-    Err("VDD 仅支持 Windows 平台".to_string())
+    Err("VDD is only supported on Windows".to_string())
 }
 
 /// 获取 VDD 设置文件路径
@@ -532,7 +532,7 @@ pub async fn load_vdd_settings() -> Result<VddSettings, String> {
     }
     
     let content = fs::read_to_string(&path)
-        .map_err(|e| format!("读取配置文件失败: {}", e))?;
+        .map_err(|e| format!("Failed to read configuration file: {}", e))?;
     
     debug!("📄 读取到的 XML 内容:\n{}", content);
     
@@ -541,7 +541,7 @@ pub async fn load_vdd_settings() -> Result<VddSettings, String> {
         .map_err(|e| {
             error!("❌ XML 解析失败: {}", e);
             error!("📄 XML 内容:\n{}", content);
-            format!("XML 解析失败: {}", e)
+            format!("XML parse failed: {}", e)
         })?;
 
     info!("✅ XML 解析成功！");
@@ -578,7 +578,7 @@ pub async fn save_vdd_settings(settings: VddSettings) -> Result<String, String> 
     }
     
     info!("✅ VDD 配置保存完成");
-    Ok("保存成功".to_string())
+    Ok("Saved successfully".to_string())
 }
 
 #[tauri::command]
@@ -605,7 +605,7 @@ pub async fn exec_pipe_cmd(command: String) -> Result<bool, String> {
                 );
                 
                 if handle.is_err() || handle.as_ref().unwrap().is_invalid() {
-                    return Err("无法连接到管道".to_string());
+                    return Err("Could not connect to pipe".to_string());
                 }
                 
                 let handle = handle.unwrap();
@@ -630,7 +630,7 @@ pub async fn exec_pipe_cmd(command: String) -> Result<bool, String> {
                 if result.is_ok() {
                     Ok(true)
                 } else {
-                    Err("写入管道失败".to_string())
+                    Err("Failed to write to pipe".to_string())
                 }
             }
         })
@@ -648,13 +648,13 @@ pub async fn exec_pipe_cmd(command: String) -> Result<bool, String> {
 fn validate_edid(data: &[u8]) -> Result<(), String> {
     // EDID 必须是 128 或 256 字节
     if data.len() != 128 && data.len() != 256 {
-        return Err(format!("EDID 文件大小无效: {} 字节（必须是 128 或 256 字节）", data.len()));
+        return Err(format!("Invalid EDID file size: {} bytes (must be 128 or 256 bytes)", data.len()));
     }
     
     // 验证 EDID 头部 (前8字节应该是: 00 FF FF FF FF FF FF 00)
     let expected_header: [u8; 8] = [0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00];
     if data.len() >= 8 && &data[0..8] != &expected_header {
-        return Err("EDID 头部格式无效".to_string());
+        return Err("Invalid EDID header format".to_string());
     }
     
     // 计算并验证 checksum (第127字节)
@@ -668,7 +668,7 @@ fn validate_edid(data: &[u8]) -> Result<(), String> {
     
     if data[127] != expected_checksum {
         return Err(format!(
-            "EDID checksum 无效: 期望 0x{:02X}，实际 0x{:02X}",
+            "Invalid EDID checksum: expected 0x{:02X}, got 0x{:02X}",
             expected_checksum, data[127]
         ));
     }
@@ -703,23 +703,23 @@ pub async fn upload_edid_file(file_data: Vec<u8>) -> Result<String, String> {
                 Command::new("powershell")
                     .args(&["-NoProfile", "-Command", &ps_command])
                     .spawn()
-                    .map_err(|e| format!("创建目录失败: {}", e))?
+                    .map_err(|e| format!("Failed to create directory: {}", e))?
                     .wait()
-                    .map_err(|e| format!("等待创建目录完成失败: {}", e))?;
+                    .map_err(|e| format!("Failed waiting for directory creation: {}", e))?;
                 
                 tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
             }
             
             #[cfg(not(target_os = "windows"))]
             fs::create_dir_all(parent)
-                .map_err(|e| format!("创建目录失败: {}", e))?;
+                .map_err(|e| format!("Failed to create directory: {}", e))?;
         }
     }
-    
+
     // 写入临时文件
     let temp_path = std::env::temp_dir().join(format!("user_edid_{}.bin", std::process::id()));
     fs::write(&temp_path, &file_data)
-        .map_err(|e| format!("写入临时文件失败: {}", e))?;
+        .map_err(|e| format!("Failed to write temp file: {}", e))?;
     
     // 使用管理员权限复制文件
     #[cfg(target_os = "windows")]
@@ -737,12 +737,12 @@ pub async fn upload_edid_file(file_data: Vec<u8>) -> Result<String, String> {
             .spawn()
             .map_err(|e| {
                 let _ = fs::remove_file(&temp_path);
-                format!("复制 EDID 文件失败: {}", e)
+                format!("Failed to copy EDID file: {}", e)
             })?
             .wait()
             .map_err(|e| {
                 let _ = fs::remove_file(&temp_path);
-                format!("等待复制完成失败: {}", e)
+                format!("Failed waiting for copy to finish: {}", e)
             })?;
         
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
@@ -751,7 +751,7 @@ pub async fn upload_edid_file(file_data: Vec<u8>) -> Result<String, String> {
     #[cfg(not(target_os = "windows"))]
     {
         fs::copy(&temp_path, &edid_path)
-            .map_err(|e| format!("复制 EDID 文件失败: {}", e))?;
+            .map_err(|e| format!("Failed to copy EDID file: {}", e))?;
     }
     
     // 清理临时文件
@@ -759,11 +759,11 @@ pub async fn upload_edid_file(file_data: Vec<u8>) -> Result<String, String> {
     
     // 验证文件是否成功写入
     if !edid_path.exists() {
-        return Err("EDID 文件写入失败".to_string());
+        return Err("Failed to write EDID file".to_string());
     }
     
     info!("✅ EDID 文件已保存到: {:?}", edid_path);
-    Ok(format!("EDID 文件已保存: {}", edid_path.display()))
+    Ok(format!("EDID file saved: {}", edid_path.display()))
 }
 
 /// 读取当前的 EDID 文件
@@ -772,11 +772,11 @@ pub fn read_edid_file() -> Result<Vec<u8>, String> {
     let edid_path = get_vdd_edid_path();
     
     if !edid_path.exists() {
-        return Err("EDID 文件不存在".to_string());
+        return Err("EDID file does not exist".to_string());
     }
-    
+
     let data = fs::read(&edid_path)
-        .map_err(|e| format!("读取 EDID 文件失败: {}", e))?;
+        .map_err(|e| format!("Failed to read EDID file: {}", e))?;
     
     // 验证读取的数据
     validate_edid(&data)?;
@@ -790,7 +790,7 @@ pub async fn delete_edid_file() -> Result<String, String> {
     let edid_path = get_vdd_edid_path();
     
     if !edid_path.exists() {
-        return Ok("EDID 文件不存在".to_string());
+        return Ok("EDID file does not exist".to_string());
     }
     
     #[cfg(target_os = "windows")]
@@ -805,9 +805,9 @@ pub async fn delete_edid_file() -> Result<String, String> {
         Command::new("powershell")
             .args(&["-NoProfile", "-Command", &ps_command])
             .spawn()
-            .map_err(|e| format!("删除 EDID 文件失败: {}", e))?
+            .map_err(|e| format!("Failed to delete EDID file: {}", e))?
             .wait()
-            .map_err(|e| format!("等待删除完成失败: {}", e))?;
+            .map_err(|e| format!("Failed waiting for deletion to finish: {}", e))?;
         
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
     }
@@ -815,11 +815,11 @@ pub async fn delete_edid_file() -> Result<String, String> {
     #[cfg(not(target_os = "windows"))]
     {
         fs::remove_file(&edid_path)
-            .map_err(|e| format!("删除 EDID 文件失败: {}", e))?;
+            .map_err(|e| format!("Failed to delete EDID file: {}", e))?;
     }
     
     info!("✅ EDID 文件已删除");
-    Ok("EDID 文件已删除".to_string())
+    Ok("EDID file deleted".to_string())
 }
 
 #[tauri::command]
@@ -840,7 +840,7 @@ pub async fn uninstall_vdd_driver() -> Result<String, String> {
         };
         
         if !nefconw_exe.exists() {
-            return Err("找不到 nefconw.exe".to_string());
+            return Err("nefconw.exe not found".to_string());
         }
         
         let command = format!(
@@ -858,11 +858,11 @@ pub async fn uninstall_vdd_driver() -> Result<String, String> {
             .spawn()
             .map_err(|e| e.to_string())?;
         
-        Ok("已请求卸载虚拟显示器驱动".to_string())
+        Ok("Virtual display driver uninstall requested".to_string())
     }
     
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持 Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }

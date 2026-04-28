@@ -374,7 +374,7 @@ const saveGpuEdit = () => {
   }
 
       settings.gpu[0].friendlyname = [gpuFriendlyName.value]
-  ElMessage.success('GPU名称已更新')
+  ElMessage.success('GPU name updated')
 }
 
 onMounted(() => {

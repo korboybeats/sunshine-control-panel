@@ -48,7 +48,7 @@ async function idbDelete(key) {
 // 预设主题
 const presets = {
   cyberpunk: {
-    label: '赛博朋克',
+    label: 'Cyberpunk',
     vars: {
       '--fd-accent': '#00fff5',
       '--fd-accent-rgb': '0, 255, 245',
@@ -74,7 +74,7 @@ const presets = {
     },
   },
   midnight: {
-    label: '午夜蓝',
+    label: 'Midnight Blue',
     vars: {
       '--fd-accent': '#6c9eff',
       '--fd-accent-rgb': '108, 158, 255',
@@ -100,7 +100,7 @@ const presets = {
     },
   },
   emerald: {
-    label: '翡翠绿',
+    label: 'Emerald Green',
     vars: {
       '--fd-accent': '#10b981',
       '--fd-accent-rgb': '16, 185, 129',
@@ -126,7 +126,7 @@ const presets = {
     },
   },
   rose: {
-    label: '玫瑰金',
+    label: 'Rose Gold',
     vars: {
       '--fd-accent': '#f472b6',
       '--fd-accent-rgb': '244, 114, 182',
@@ -152,7 +152,7 @@ const presets = {
     },
   },
   steam: {
-    label: 'Steam 经典',
+    label: 'Steam Classic',
     vars: {
       '--fd-accent': '#66c0f4',
       '--fd-accent-rgb': '102, 192, 244',

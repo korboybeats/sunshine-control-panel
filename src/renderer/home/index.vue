@@ -17,8 +17,8 @@ const toggleLanguage = () => {
 
 // 更新页面标题
 const updatePageTitle = () => {
-  document.title = currentLang.value === 'zh' 
-    ? 'Sunshine 基地版 - 让游戏串流更优雅' 
+  document.title = currentLang.value === 'zh'
+    ? 'Sunshine Foundation - Game Streaming, Done Right'
     : 'Sunshine Foundation - Make Game Streaming Greater'
 }
 
@@ -136,13 +136,13 @@ const clients = [
     color: 'red',
   },
   {
-    name: '威力加强版 Moonlight-Android',
+    name: 'Moonlight-Android (Enhanced Edition)',
     platform: 'Android',
     link: 'https://github.com/qiin2333/moonlight-android/releases/tag/shortcut',
     color: 'green',
   },
   {
-    name: '王冠版 Moonlight-Android',
+    name: 'Moonlight-Android (Crown Edition)',
     platform: 'Android',
     link: 'https://github.com/WACrown/moonlight-android',
     color: 'blue',

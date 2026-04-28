@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>哎呀！Sunshine好像睡着了～</title>
+    <title>Oops! Sunshine seems to be asleep</title>
     <style>
         * {
             margin: 0;
@@ -288,26 +288,26 @@
                 </g>
             </svg>
         </div>
-        <h1>呜～Sunshine 好像被玩坏掉了呢～</h1>
+        <h1>Whoops - Sunshine isn't responding</h1>
         <p class="message">
-            杂鱼～连 Sunshine 都启动不了，真是没用呢♡
+            We couldn't reach the Sunshine service.
         </p>
-        
+
         <div class="tips">
-            <h3>💫 让 Sunshine 重新站起来的方法：</h3>
+            <h3>How to bring Sunshine back online:</h3>
             <ul>
-                <li>Sunshine 服务是不是在偷懒睡觉呢～</li>
-                <li>端口 47990 准备好了吗？杂鱼要好好确认哦</li>
-                <li>防火墙可不能把 Sunshine 关在外面呢～</li>
+                <li>Make sure the Sunshine service is running.</li>
+                <li>Confirm that port 47990 is available and not blocked.</li>
+                <li>Check that your firewall isn't blocking Sunshine.</li>
             </ul>
         </div>
-        
+
         <div>
-            <button class="btn" onclick="location.reload()">再试一次</button>
+            <button class="btn" onclick="location.reload()">Try again</button>
         </div>
-        
+
         <div class="footer" id="footer-text">
-            🎀 快点让 Sunshine 醒过来嘛～
+            Waiting for Sunshine to come back...
         </div>
     </div>
     
@@ -362,7 +362,7 @@
         
         function onSuccess() {
             if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-            footerEl.textContent = '🎉 Sunshine 醒过来啦！正在跳转...';
+            footerEl.textContent = 'Sunshine is back! Reloading...';
             setTimeout(() => location.reload(), 300);
         }
         
@@ -370,14 +370,14 @@
             roundCount++;
             const interval = roundCount <= 1 + PHASE2_ROUNDS ? PHASE2_INTERVAL : PHASE3_INTERVAL;
             countdown = interval;
-            footerEl.textContent = `⏰ 第${roundCount - 1}次探测失败，${countdown}秒后重试...`;
+            footerEl.textContent = `Attempt ${roundCount - 1} failed. Retrying in ${countdown}s...`;
             countdownTimer = setInterval(() => {
                 if (--countdown <= 0) {
                     clearInterval(countdownTimer);
                     countdownTimer = null;
                     normalProbe();
                 } else {
-                    footerEl.textContent = `⏰ 第${roundCount - 1}次探测失败，${countdown}秒后重试...`;
+                    footerEl.textContent = `Attempt ${roundCount - 1} failed. Retrying in ${countdown}s...`;
                 }
             }, 1000);
         }
@@ -386,7 +386,7 @@
         async function phase1() {
             roundCount = 1;
             for (let i = 0; i < PHASE1_DURATION; i++) {
-                footerEl.textContent = `🔍 第1次探测 Sunshine...`;
+                footerEl.textContent = `Checking Sunshine (attempt 1)...`;
                 if (await probe(1000)) return onSuccess();
                 if (i < PHASE1_DURATION - 1) await new Promise(r => setTimeout(r, 1000));
             }
@@ -394,7 +394,7 @@
         }
         
         async function normalProbe() {
-            footerEl.textContent = `🔍 第${roundCount}次探测 Sunshine...`;
+            footerEl.textContent = `Checking Sunshine (attempt ${roundCount})...`;
             if (await probe()) return onSuccess();
             scheduleNextRound();
         }

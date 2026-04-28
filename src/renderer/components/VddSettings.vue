@@ -184,7 +184,7 @@
               >
                 <el-button size="small" type="primary">
                   <el-icon><Upload /></el-icon>
-                  选择EDID文件
+                  Select EDID File
                 </el-button>
               </el-upload>
               <el-button size="small" @click="downloadEdid" :disabled="!edidFileExists">

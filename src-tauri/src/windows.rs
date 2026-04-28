@@ -61,7 +61,7 @@ const WEBVIEW_VISIBILITY_INIT_SCRIPT: &str = r#"
         var wasHidden = _hidden;
         _hidden = !visible;
         if (wasHidden !== _hidden) {
-            console.log('[WebView Visibility] ' + (_hidden ? '进入休眠' : '恢复活跃'));
+            console.log('[WebView Visibility] ' + (_hidden ? 'entering idle' : 'resuming active'));
             if (_hidden) {
                 pauseAnimations();
             } else {
@@ -324,14 +324,14 @@ where
         return Ok(window);
     }
     
-    builder_fn(app).map_err(|e| format!("创建窗口失败: {}", e))
+    builder_fn(app).map_err(|e| format!("Failed to create window: {}", e))
 }
 
 /// 打开关于窗口（单例模式）
 pub fn open_about_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     let window = get_or_create_window(app, ABOUT_WINDOW_ID, |app| {
         tauri::WebviewWindowBuilder::new(app, ABOUT_WINDOW_ID, tauri::WebviewUrl::App("about/index.html".into()))
-            .title("关于 Sunshine Control Panel")
+            .title("About Sunshine Control Panel")
             .inner_size(540.0, 620.0)
             .resizable(false)
             .maximizable(false)
@@ -353,7 +353,7 @@ pub fn open_about_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
 pub fn open_log_console<R: Runtime>(app: &AppHandle<R>) {
     match get_or_create_window(app, LOG_CONSOLE_WINDOW_ID, |app| {
         tauri::WebviewWindowBuilder::new(app, LOG_CONSOLE_WINDOW_ID, tauri::WebviewUrl::App("console/index.html".into()))
-            .title("日志控制台")
+            .title("Log Console")
             .inner_size(1000.0, 700.0)
             .resizable(true)
             .maximizable(true)
@@ -383,7 +383,7 @@ pub fn open_pin_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std
     }
     
     let window = tauri::WebviewWindowBuilder::new(app, PIN_WINDOW_ID, tauri::WebviewUrl::App("pin/index.html".into()))
-        .title("PIN 配对")
+        .title("PIN Pairing")
         .fullscreen(true)
         .decorations(false)
         .transparent(true)
@@ -391,7 +391,7 @@ pub fn open_pin_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std
         .skip_taskbar(true)
         .visible(false)
         .build()
-        .map_err(|e| format!("创建 PIN 窗口失败: {}", e))?;
+        .map_err(|e| format!("Failed to create PIN window: {}", e))?;
     
     disable_context_menu(&window);
     
@@ -413,7 +413,7 @@ pub fn open_pin_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std
 pub fn open_debug_page<R: Runtime>(app: &AppHandle<R>) {
     match get_or_create_window(app, DEBUG_PAGE_WINDOW_ID, |app| {
         tauri::WebviewWindowBuilder::new(app, DEBUG_PAGE_WINDOW_ID, tauri::WebviewUrl::App("console/drag-drop-demo.html".into()))
-            .title("调试页面 - 拖拽测试")
+            .title("Debug Page - Drag &amp; Drop Test")
             .inner_size(1200.0, 800.0)
             .resizable(true)
             .maximizable(true)
@@ -444,7 +444,7 @@ fn create_main_window_internal<R: Runtime>(app: &AppHandle<R>, visible: bool) ->
         return Ok(());
     }
     
-    let visibility_desc = if visible { "" } else { "隐藏的" };
+    let visibility_desc = if visible { "" } else { "hidden " };
     info!("🪟 创建{}主窗口...", visibility_desc);
     
     let window = tauri::WebviewWindowBuilder::new(app, MAIN_WINDOW_ID, tauri::WebviewUrl::App("placeholder.html".into()))
@@ -459,7 +459,7 @@ fn create_main_window_internal<R: Runtime>(app: &AppHandle<R>, visible: bool) ->
         .disable_drag_drop_handler()
         .initialization_script(WEBVIEW_VISIBILITY_INIT_SCRIPT)
         .build()
-        .map_err(|e| format!("创建{}主窗口失败: {}", visibility_desc, e))?;
+        .map_err(|e| format!("Failed to create {}main window: {}", visibility_desc, e))?;
     
     // 设置 DWM 圆角，让系统级合成器裁剪窗口圆角
     #[cfg(target_os = "windows")]
@@ -491,7 +491,7 @@ pub fn create_desktop_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<d
         .disable_drag_drop_handler()
         .initialization_script(WEBVIEW_VISIBILITY_INIT_SCRIPT)
         .build()
-        .map_err(|e| format!("创建桌面窗口失败: {}", e))?;
+        .map_err(|e| format!("Failed to create desktop window: {}", e))?;
     
     #[cfg(target_os = "windows")]
     apply_dwm_rounded_corners(&window);

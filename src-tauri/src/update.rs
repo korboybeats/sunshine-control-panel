@@ -171,7 +171,7 @@ fn create_http_client(timeout_secs: u64) -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .timeout(Duration::from_secs(timeout_secs))
         .build()
-        .map_err(|e| format!("创建HTTP客户端失败: {}", e))
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))
 }
 
 /// 尝试单个 URL 请求
@@ -182,13 +182,13 @@ async fn try_single_request(client: &reqwest::Client, url: &str) -> Result<reqwe
         .header("Accept", "application/vnd.github.v3+json")
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| format!("Request failed: {}", e))?;
     
     if response.status().is_success() {
         debug!("✅ 请求成功，来源: {}", url);
         Ok(response)
     } else {
-        Err(format!("HTTP状态码 {}", response.status().as_u16()))
+        Err(format!("HTTP status code {}", response.status().as_u16()))
     }
 }
 
@@ -207,7 +207,7 @@ async fn fetch_with_proxies(
         }
     }
 
-    Err("所有请求方式都失败了".to_string())
+    Err("All request attempts failed".to_string())
 }
 
 /// 使用适当的加速代理获取GitHub API数据
@@ -224,7 +224,7 @@ async fn http_get_with_proxies(url: &str) -> Result<String, String> {
     response
         .text()
         .await
-        .map_err(|e| format!("读取响应内容失败: {}", e))
+        .map_err(|e| format!("Failed to read response content: {}", e))
 }
 
 /// 获取所有发布版本（包括预发布）
@@ -232,8 +232,8 @@ async fn fetch_all_releases() -> Result<Vec<GitHubRelease>, String> {
     let json = http_get_with_proxies(GITHUB_API_URL).await?;
     
     let releases: Vec<GitHubRelease> = serde_json::from_str(&json)
-        .map_err(|e| format!("解析GitHub API响应失败: {}", e))?;
-    
+        .map_err(|e| format!("Failed to parse GitHub API response: {}", e))?;
+
     Ok(releases)
 }
 
@@ -242,8 +242,8 @@ async fn fetch_latest_stable_release() -> Result<GitHubRelease, String> {
     let json = http_get_with_proxies(GITHUB_API_URL_LATEST).await?;
     
     let release: GitHubRelease = serde_json::from_str(&json)
-        .map_err(|e| format!("解析GitHub API响应失败: {}", e))?;
-    
+        .map_err(|e| format!("Failed to parse GitHub API response: {}", e))?;
+
     Ok(release)
 }
 
@@ -315,12 +315,12 @@ pub async fn check_for_updates_internal(manual: bool, include_prerelease: bool) 
     let releases = get_releases().await?;
     
     if releases.is_empty() {
-        return Err("未找到任何发布版本".to_string());
+        return Err("No releases found".to_string());
     }
     
     // 查找最新的可用发布版本
     let release = find_latest_release(&releases, include_prerelease)
-        .ok_or_else(|| "未找到可用的发布版本".to_string())?;
+        .ok_or_else(|| "No available release found".to_string())?;
     
     let latest_version = normalize_version(&release.tag_name);
     
@@ -351,11 +351,11 @@ fn get_update_preferences_path<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf
     let app_data_dir = app
         .path()
         .app_data_dir()
-        .map_err(|e| format!("获取应用数据目录失败: {}", e))?;
+        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
 
     // 确保目录存在
     if !app_data_dir.exists() {
-        fs::create_dir_all(&app_data_dir).map_err(|e| format!("创建应用数据目录失败: {}", e))?;
+        fs::create_dir_all(&app_data_dir).map_err(|e| format!("Failed to create app data directory: {}", e))?;
     }
 
     Ok(app_data_dir.join("update_preferences.json"))
@@ -597,7 +597,7 @@ async fn stop_sunshine_via_api() -> Result<(), String> {
         .danger_accept_invalid_certs(true)
         .timeout(Duration::from_secs(5))
         .build()
-        .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
     
     match client.get(&boom_url).send().await {
         Ok(response) => {
@@ -606,13 +606,13 @@ async fn stop_sunshine_via_api() -> Result<(), String> {
                 info!("✅ 已通过 HTTP API 请求关闭 Sunshine");
                 Ok(())
             } else if status.as_u16() == 401 {
-                Err("需要身份验证（401）".to_string())
+                Err("Authentication required (401)".to_string())
             } else {
-                Err(format!("HTTP API 返回错误状态码: {}", status))
+                Err(format!("HTTP API returned error status code: {}", status))
             }
         }
         Err(e) => {
-            Err(format!("通过 HTTP API 关闭失败: {}", e))
+            Err(format!("Failed to shut down via HTTP API: {}", e))
         }
     }
 }
@@ -669,7 +669,7 @@ async fn stop_sunshine_and_gui() -> Result<(), String> {
 
 #[cfg(not(target_os = "windows"))]
 async fn stop_sunshine_and_gui() -> Result<(), String> {
-    Err("此功能仅支持Windows".to_string())
+    Err("This feature is only supported on Windows".to_string())
 }
 
 // ========== 下载相关 ==========
@@ -755,9 +755,9 @@ async fn download_stream(
     let mut last_progress_percent: u32 = 0;
     
     while let Some(item) = stream.next().await {
-        let chunk = item.map_err(|e| format!("读取数据块失败: {}", e))?;
+        let chunk = item.map_err(|e| format!("Failed to read data chunk: {}", e))?;
         file.write_all(&chunk)
-            .map_err(|e| format!("写入文件失败: {}", e))?;
+            .map_err(|e| format!("Failed to write to file: {}", e))?;
         downloaded += chunk.len() as u64;
         
         // 更新进度
@@ -812,7 +812,7 @@ pub async fn download_update(
     }
 
     let mut file = std::fs::File::create(&file_path)
-        .map_err(|e| format!("创建文件失败: {}", e))?;
+        .map_err(|e| format!("Failed to create file: {}", e))?;
 
     let stream = response.bytes_stream();
     let downloaded = download_stream(stream, &mut file, total_size, window.as_ref()).await?;
@@ -827,7 +827,7 @@ pub async fn download_update(
     Ok(serde_json::json!({
         "success": true,
         "file_path": file_path.to_string_lossy().to_string(),
-        "message": "下载完成"
+        "message": "Download complete"
     }))
 }
 
@@ -853,7 +853,7 @@ fn build_install_command(file_path: &str, extension: &str) -> Result<String, Str
                 escaped_path
             ))
         }
-        _ => Err(format!("不支持的安装包格式: {}", extension)),
+        _ => Err(format!("Unsupported installer format: {}", extension)),
     }
 }
 
@@ -869,7 +869,7 @@ fn launch_installer(install_args: &str) -> Result<(), String> {
         .args(&["-NoProfile", "-WindowStyle", "Hidden", "-Command", install_args])
         .creation_flags(CREATE_NO_WINDOW)
         .spawn()
-        .map_err(|e| format!("启动安装程序失败: {}", e))?;
+        .map_err(|e| format!("Failed to launch installer: {}", e))?;
     
     Ok(())
 }
@@ -911,7 +911,7 @@ pub async fn install_update(file_path: String, app_handle: AppHandle) -> Result<
     
     #[cfg(not(target_os = "windows"))]
     {
-        Err("此功能仅支持Windows".to_string())
+        Err("This feature is only supported on Windows".to_string())
     }
 }
 

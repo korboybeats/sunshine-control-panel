@@ -398,7 +398,7 @@ fn toggle_sunshine_mode<R: Runtime>(app: &AppHandle<R>) {
             }
             Err(e) => {
                 error!("❌ 切换 Sunshine 模式失败: {}", e);
-                emit_message(&app_handle, "error", &format!("切换失败: {}", e));
+                emit_message(&app_handle, "error", &format!("Switch failed: {}", e));
             }
         }
     });

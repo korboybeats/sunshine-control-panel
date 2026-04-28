@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="../../assets/sunshine.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>关于 Sunshine Control Panel</title>
+    <title>About Sunshine Control Panel</title>
     <style>
       * {
         margin: 0;
@@ -142,27 +142,27 @@
         />
       </div>
       <h1>Sunshine Control Panel</h1>
-      <div class="version" id="app-version">版本 Loading...</div>
-      <div class="description">Sunshine 控制面板 - 为游戏流媒体提供强大的 GUI 管理工具</div>
+      <div class="version" id="app-version">Version Loading...</div>
+      <div class="description">Sunshine Control Panel - a powerful GUI for managing your game streaming setup</div>
 
       <div class="info-grid" id="info-grid">
         <div class="info-item">
-          <div class="info-label">构建时间</div>
+          <div class="info-label">Build Time</div>
           <div class="info-value" id="build-time">Loading...</div>
         </div>
         <div class="info-item">
-          <div class="info-label">架构</div>
+          <div class="info-label">Architecture</div>
           <div class="info-value" id="arch">Loading...</div>
         </div>
         <div class="info-item">
-          <div class="info-label">Tauri 版本</div>
+          <div class="info-label">Tauri Version</div>
           <div class="info-value" id="tauri-version">Loading...</div>
         </div>
       </div>
 
       <div class="links">
         <a href="https://github.com/AlkaidLab/foundation-sunshine" class="link" target="_blank">GitHub</a>
-        <a href="https://www.alkaidlab.com/" class="link" target="_blank">官网</a>
+        <a href="https://www.alkaidlab.com/" class="link" target="_blank">Website</a>
       </div>
 
       <div class="copyright">© 2025 Foundation Sunshine | qiin2333 | alkaidlab.com</div>
@@ -189,7 +189,7 @@
       const formatMemory = (bytes) => `${(bytes / (1024 ** 3)).toFixed(1)} GB`
 
       const updateUI = (data) => {
-        $('app-version').textContent = `版本 ${data.appVersion}`
+        $('app-version').textContent = `Version ${data.appVersion}`
         $('build-time').textContent = data.buildTime
         $('arch').textContent = data.arch
         $('tauri-version').textContent = data.tauriVersion
@@ -197,15 +197,15 @@
         const infoGrid = $('info-grid')
 
         if (data.osVersion) {
-          infoGrid.appendChild(createInfoItem('操作系统', data.osVersion))
+          infoGrid.appendChild(createInfoItem('OS', data.osVersion))
         }
 
         if (data.memoryTotal) {
-          infoGrid.appendChild(createInfoItem('总内存', formatMemory(data.memoryTotal)))
+          infoGrid.appendChild(createInfoItem('Total Memory', formatMemory(data.memoryTotal)))
         }
 
         if (data.cpuModel) {
-          infoGrid.appendChild(createInfoItem('处理器', data.cpuModel, '12px'))
+          infoGrid.appendChild(createInfoItem('Processor', data.cpuModel, '12px'))
         }
 
         if (infoGrid.children.length > 3) {

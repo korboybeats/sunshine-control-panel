@@ -252,7 +252,7 @@ async function checkPathExists(templateId, paramKey, filePath) {
       const { exists } = await import('@tauri-apps/plugin-fs')
       const found = await exists(filePath)
       if (!found) {
-        pathWarnings.value = { ...pathWarnings.value, [key]: t.launchHelper.fileNotFound || '文件不存在' }
+        pathWarnings.value = { ...pathWarnings.value, [key]: t.launchHelper.fileNotFound || 'File not found' }
       } else {
         const { [key]: _, ...rest } = pathWarnings.value
         pathWarnings.value = rest

@@ -696,7 +696,7 @@ fn scan_directory_recursive(
     
     // 读取目录内容
     let entries = fs::read_dir(dir_path)
-        .map_err(|e| format!("读取目录失败: {}", e))?;
+        .map_err(|e| format!("Failed to read directory: {}", e))?;
     
     for entry in entries {
         let entry = match entry {
@@ -1344,7 +1344,7 @@ struct SteamSearchItem {
 #[tauri::command]
 pub async fn search_steam_covers(query: String) -> Result<Vec<SteamCoverCandidate>, String> {
     if query.is_empty() {
-        return Err("搜索关键词不能为空".to_string());
+        return Err("Search query cannot be empty".to_string());
     }
 
     let client = crate::commands::cdn_client();
@@ -1356,17 +1356,17 @@ pub async fn search_steam_covers(query: String) -> Result<Vec<SteamCoverCandidat
     info!("🔍 搜索 Steam Store: {}", search_url);
 
     let resp = client.get(&search_url).send().await
-        .map_err(|e| format!("Steam 搜索失败: {}", e))?;
+        .map_err(|e| format!("Steam search failed: {}", e))?;
 
     if !resp.status().is_success() {
-        return Err(format!("Steam 搜索失败, HTTP {}", resp.status()));
+        return Err(format!("Steam search failed: HTTP {}", resp.status()));
     }
 
     let data: SteamSearchResponse = resp.json().await
-        .map_err(|e| format!("解析搜索结果失败: {}", e))?;
+        .map_err(|e| format!("Failed to parse search results: {}", e))?;
 
     if data.items.is_empty() {
-        return Err(format!("在 Steam 上未找到 \"{}\"", query));
+        return Err(format!("\"{}\" was not found on Steam", query));
     }
 
     let candidates: Vec<SteamCoverCandidate> = data.items.into_iter().take(6).map(|item| {
@@ -1414,24 +1414,24 @@ pub async fn upload_steam_cover(
 
     // 安全检查：仅允许 Steam CDN
     if !header_url.starts_with("https://cdn.akamai.steamstatic.com/") {
-        return Err(format!("不允许从此域名下载: {}", header_url));
+        return Err(format!("Downloads from this domain are not allowed: {}", header_url));
     }
 
     let client = crate::commands::cdn_client();
 
     // 1. 下载封面图片
     let resp = client.get(&header_url).send().await
-        .map_err(|e| format!("下载封面失败: {}", e))?;
+        .map_err(|e| format!("Failed to download cover: {}", e))?;
 
     if !resp.status().is_success() {
-        return Err(format!("下载失败, HTTP {}", resp.status()));
+        return Err(format!("Download failed: HTTP {}", resp.status()));
     }
 
     let bytes = resp.bytes().await
-        .map_err(|e| format!("读取封面失败: {}", e))?;
+        .map_err(|e| format!("Failed to read cover: {}", e))?;
 
     if bytes.is_empty() {
-        return Err("下载的封面为空".to_string());
+        return Err("Downloaded cover is empty".to_string());
     }
 
     // 2. 转 base64
@@ -1447,10 +1447,10 @@ pub async fn upload_steam_cover(
     let upload_resp = client.post(&upload_url)
         .json(&payload)
         .send().await
-        .map_err(|e| format!("上传封面失败: {}", e))?;
+        .map_err(|e| format!("Failed to upload cover: {}", e))?;
 
     if !upload_resp.status().is_success() {
-        return Err(format!("上传失败, HTTP {}", upload_resp.status()));
+        return Err(format!("Upload failed: HTTP {}", upload_resp.status()));
     }
 
     info!("✅ 封面已上传: {} ({} bytes)", app_name, bytes.len());

@@ -247,7 +247,7 @@ export function useLaunchHelpers(t) {
    */
   function validateHelpers(helpers) {
     const tVal = t?.value || t
-    const requiredMsg = tVal?.launchHelper?.fieldRequired || '不能为空'
+    const requiredMsg = tVal?.launchHelper?.fieldRequired || 'cannot be empty'
     const resolvedTemplates = templates.value
     const errors = []
     for (const helper of helpers) {
@@ -383,17 +383,17 @@ export function useLaunchHelpers(t) {
           let wrapCmd = (rawTmpl || tmpl).wrapTemplate || ''
           wrapCmd = wrapCmd.split('{path}').join(wrapPath)
           if (mergedParams.extraArgs) wrapCmd = `${wrapCmd} ${mergedParams.extraArgs}`
-          cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewWrapper || '(包装启动命令)'}`, value: `${wrapCmd} <游戏命令>` })
+          cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewWrapper || '(wraps launch command)'}`, value: `${wrapCmd} <game command>` })
         }
       } else if (tmpl.id === 'custom') {
-        if (mergedParams.doCmd) cmds.push({ label: `${tmpl.icon} ${lh.previewBefore || '(启动前)'}`, value: mergedParams.doCmd })
-        if (mergedParams.undoCmd) cmds.push({ label: `${tmpl.icon} ${lh.previewAfter || '(退出后)'}`, value: mergedParams.undoCmd })
+        if (mergedParams.doCmd) cmds.push({ label: `${tmpl.icon} ${lh.previewBefore || '(before launch)'}`, value: mergedParams.doCmd })
+        if (mergedParams.undoCmd) cmds.push({ label: `${tmpl.icon} ${lh.previewAfter || '(after exit)'}`, value: mergedParams.undoCmd })
       } else {
         const doCmd = buildDoCmd(rawTmpl || tmpl, mergedParams)
         const undoCmd = buildUndoCmd(rawTmpl || tmpl, mergedParams)
         const elevatedTag = tmpl.elevated ? ' 🛡️' : ''
-        if (doCmd) cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewBefore || '(启动前)'}${elevatedTag}`, value: doCmd })
-        if (undoCmd) cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewAfter || '(退出后)'}${elevatedTag}`, value: undoCmd })
+        if (doCmd) cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewBefore || '(before launch)'}${elevatedTag}`, value: doCmd })
+        if (undoCmd) cmds.push({ label: `${tmpl.icon} ${tmpl.name} ${lh.previewAfter || '(after exit)'}${elevatedTag}`, value: undoCmd })
       }
     }
     return cmds
