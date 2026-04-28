@@ -158,8 +158,13 @@ pub fn create_system_tray<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     // size Windows uses for the system tray; the solid radial-gradient disc
     // reads cleanly at any size while still matching the orange-yellow
     // colour scheme of the rest of the app icons.
-    let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
-        .expect("Failed to load embedded tray icon PNG");
+    // Tauri 2.10 Image::new_owned wants raw RGBA, so decode the PNG via the
+    // `image` crate at startup.
+    let tray_png = image::load_from_memory(include_bytes!("../icons/tray-icon.png"))
+        .expect("Failed to decode embedded tray icon PNG")
+        .to_rgba8();
+    let (tw, th) = tray_png.dimensions();
+    let tray_icon = tauri::image::Image::new_owned(tray_png.into_raw(), tw, th);
 
     TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
